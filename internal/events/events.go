@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -26,49 +27,62 @@ func GetEvents(ctx context.Context) []list.Item {
 
 	// get log groups
 	logGroupsOutput, err := cwClient.DescribeLogGroups(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-		LogGroupNamePrefix: aws.String("/aws/lambda"),
+		LogGroupNamePattern: aws.String("/aws/lambda/dev-djaap-event-handlers-batch-processor"),
 	})
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	for _, v := range logGroupsOutput.LogGroups {
+		fmt.Printf("%v\n", aws.ToString(v.LogGroupName))
 	}
 
 	// get log streams
+	logGroupName := logGroupsOutput.LogGroups[0].LogGroupName
 	logStreamsOutput, err := cwClient.DescribeLogStreams(ctx, &cloudwatchlogs.DescribeLogStreamsInput{
-		Limit:        aws.Int32(1),
-		LogGroupName: logGroupsOutput.LogGroups[0].LogGroupName,
+		Limit:              aws.Int32(1),
+		LogGroupIdentifier: logGroupName,
+		Descending:         aws.Bool(true),
 	})
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	for _, v := range logStreamsOutput.LogStreams {
+		fmt.Printf("%v\n", aws.ToString(v.LogStreamName))
 	}
 
 	// get log events
-	eventsOutput, err := cwClient.GetLogEvents(ctx, &cloudwatchlogs.GetLogEventsInput{
-		Limit:         aws.Int32(5),
-		LogGroupName:  logGroupsOutput.LogGroups[0].LogGroupName,
-		LogStreamName: logStreamsOutput.LogStreams[0].LogStreamName,
+	logStreamName := logStreamsOutput.LogStreams[0].LogStreamName
+	logEventsOutput, err := cwClient.GetLogEvents(ctx, &cloudwatchlogs.GetLogEventsInput{
+		LogStreamName: logStreamName,
+		LogGroupName:  logGroupName,
+		Limit:         aws.Int32(20),
+		StartFromHead: aws.Bool(true),
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	regx, _ := regexp.Compile(`.*(?P<json>{.*}).*`)
+	fmt.Printf("%v\n", len(logEventsOutput.Events))
 
+	regx, _ := regexp.Compile(`(.*)(?P<json>{.*})(.*)`)
 	var formattedEvents []list.Item
 
-	for k := range eventsOutput.Events {
-		submatches := regx.FindStringSubmatch(
-			aws.ToString(eventsOutput.Events[k].Message),
-		)
-		timeStamp := eventsOutput.Events[k].Timestamp
+	for k := range logEventsOutput.Events {
+		msg := aws.ToString(logEventsOutput.Events[k].Message)
 
-		if len(submatches) == 0 {
-			continue
+		submatches := regx.FindStringSubmatch(msg)
+
+		timeStamp := logEventsOutput.Events[k].Timestamp
+
+		if len(submatches) > 1 {
+			msg = submatches[1] + "\n" + formatJson(submatches[2]) + "\n" + submatches[3]
 		}
-		jsonMessage := submatches[1]
 
 		formattedEvents = append(
 			formattedEvents,
-			Event{Message: formatJson(jsonMessage), TimeStamp: fmt.Sprintf("%v", *timeStamp)},
+			Event{Message: strings.ReplaceAll(msg, "\t", " "), TimeStamp: fmt.Sprintf("%v", *timeStamp)},
 		)
 	}
 

@@ -13,35 +13,42 @@ import (
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
-type model struct {
+type eventListModel struct {
 	events         list.Model
 	cursorPosition int
 	selected       []bool
 }
 
-func initialModel(ctx context.Context) model {
-	events := events.GetEvents(ctx)
+func initialModel(ctx context.Context) eventListModel {
+	cloudWatchEvents := events.GetEvents(ctx)
 
 	selected := make([]bool, 5)
 	for i := range selected {
 		selected[i] = false
 	}
 
-	return model{
-		events:   list.New(events, list.NewDefaultDelegate(), 0, 0),
+	return eventListModel{
+		events:   list.New(cloudWatchEvents, list.NewDefaultDelegate(), 0, 0),
 		selected: selected,
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m eventListModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) View() string {
-	return docStyle.Render(m.events.View())
+func (m eventListModel) View() string {
+	items := m.events.Items()
+	currentItem := items[m.events.Index()]
+
+	eventList := docStyle.Render(m.events.View())
+	message := docStyle.Render(currentItem.FilterValue())
+
+	return lipgloss.JoinHorizontal(lipgloss.Center, eventList, message)
+	//return docStyle.Render(m.events.View())
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m eventListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
