@@ -2,20 +2,15 @@ package events
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
-	"regexp"
-	"strings"
 
-	"github.com/TylerBrock/colorjson"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	"github.com/charmbracelet/bubbles/list"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
-func GetEvents(ctx context.Context) []list.Item {
+func GetEvents(ctx context.Context) []types.OutputLogEvent {
 	// Load the Shared AWS Configuration(~/.aws/config)
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -33,10 +28,6 @@ func GetEvents(ctx context.Context) []list.Item {
 		log.Fatal(err)
 	}
 
-	for _, v := range logGroupsOutput.LogGroups {
-		fmt.Printf("%v\n", aws.ToString(v.LogGroupName))
-	}
-
 	// get log streams
 	logGroupName := logGroupsOutput.LogGroups[0].LogGroupName
 	logStreamsOutput, err := cwClient.DescribeLogStreams(ctx, &cloudwatchlogs.DescribeLogStreamsInput{
@@ -46,10 +37,6 @@ func GetEvents(ctx context.Context) []list.Item {
 	})
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	for _, v := range logStreamsOutput.LogStreams {
-		fmt.Printf("%v\n", aws.ToString(v.LogStreamName))
 	}
 
 	// get log events
@@ -64,38 +51,25 @@ func GetEvents(ctx context.Context) []list.Item {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("%v\n", len(logEventsOutput.Events))
+	return logEventsOutput.Events
 
-	regx, _ := regexp.Compile(`(.*)(?P<json>{.*})(.*)`)
-	var formattedEvents []list.Item
-
-	for k := range logEventsOutput.Events {
-		msg := aws.ToString(logEventsOutput.Events[k].Message)
-
-		submatches := regx.FindStringSubmatch(msg)
-
-		timeStamp := logEventsOutput.Events[k].Timestamp
-
-		if len(submatches) > 1 {
-			msg = submatches[1] + "\n" + formatJson(submatches[2]) + "\n" + submatches[3]
-		}
-
-		formattedEvents = append(
-			formattedEvents,
-			Event{Message: strings.ReplaceAll(msg, "\t", " "), TimeStamp: fmt.Sprintf("%v", *timeStamp)},
-		)
-	}
-
-	return formattedEvents
 }
 
-func formatJson(in string) string {
-	var obj map[string]interface{}
-	json.Unmarshal([]byte(in), &obj)
+func GetLogGroup(ctx context.Context, in cloudwatchlogs.DescribeLogGroupsInput) ([]types.LogGroup, error) {
+	// Load the Shared AWS Configuration(~/.aws/config)
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	f := colorjson.NewFormatter()
-	f.Indent = 2
+	// get cloudwatch client
+	cwClient := cloudwatchlogs.NewFromConfig(cfg)
 
-	s, _ := f.Marshal(obj)
-	return string(s)
+	// get log groups
+	logGroupsOutput, err := cwClient.DescribeLogGroups(ctx, &in)
+	if err != nil {
+		log.Fatal(err)
+		return []types.LogGroup{}, err
+	}
+	return logGroupsOutput.LogGroups, nil
 }

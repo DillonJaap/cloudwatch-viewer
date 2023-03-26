@@ -1,7 +1,7 @@
 package model
 
 import (
-	"clviewer/internal/events"
+	"clviewer/internal/model/logevent"
 	"context"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -12,7 +12,7 @@ import (
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
 type Model struct {
-	eventsModel    list.Model
+	eventsModel    logevent.Model
 	logGroupsModel LogGroupModel
 }
 
@@ -39,10 +39,8 @@ func InitialModel(ctx context.Context) Model {
 	logGroupList.Styles.PaginationStyle = paginationStyle
 	logGroupList.Styles.HelpStyle = helpStyle
 
-	cloudWatchEvents := events.GetEvents(ctx)
-
 	return Model{
-		eventsModel: list.New(cloudWatchEvents, list.NewDefaultDelegate(), 0, 0),
+		eventsModel: logevent.DefaultModel(),
 		logGroupsModel: LogGroupModel{
 			list:   logGroupList,
 			choice: "",
@@ -55,8 +53,9 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) View() string {
-	items := m.eventsModel.Items()
-	currentItem := items[m.eventsModel.Index()]
+	list := m.eventsModel.List
+	items := list.Items()
+	currentItem := items[list.Index()]
 
 	//logGroupList := docStyle.Render(m.logGroupsModel.View())
 	eventList := docStyle.Render(m.eventsModel.View())
@@ -73,10 +72,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
-		m.eventsModel.SetSize(msg.Width-h, msg.Height-v)
+		m.eventsModel.List.SetSize(msg.Width-h, msg.Height-v)
 	}
 
-	var cmd tea.Cmd
-	m.eventsModel, cmd = m.eventsModel.Update(msg)
-	return m, cmd
+	return m, nil
 }
