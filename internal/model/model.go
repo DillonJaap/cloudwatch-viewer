@@ -53,15 +53,16 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) View() string {
-	list := m.eventsModel.List
-	items := list.Items()
-	currentItem := items[list.Index()]
+	//list := m.eventsModel.List
+	//items := list.Items()
+	//currentItem := items[list.Index()]
 
 	//logGroupList := docStyle.Render(m.logGroupsModel.View())
 	eventList := docStyle.Render(m.eventsModel.View())
-	message := docStyle.Render(currentItem.FilterValue())
+	return eventList
+	//message := docStyle.Render(currentItem.FilterValue())
 
-	return lipgloss.JoinHorizontal(lipgloss.Center, eventList, message)
+	//return lipgloss.JoinHorizontal(lipgloss.Center, eventList)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -70,10 +71,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
-	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.eventsModel.List.SetSize(msg.Width-h, msg.Height-v)
 	}
 
-	return m, nil
+	return m.eventsModel.Update(msg)
 }

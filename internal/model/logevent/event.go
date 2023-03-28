@@ -36,19 +36,21 @@ func (e Event) getTruncatedDescription() string {
 
 type eventDelegate struct{}
 
-func (d eventDelegate) Height() int { return 1 }
+func (d *eventDelegate) Height() int { return 1 }
 
-func (d eventDelegate) Spacing() int { return 0 }
+func (d *eventDelegate) Spacing() int { return 0 }
 
-func (d eventDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
+func (d *eventDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+	return nil
+}
 
-func (d eventDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+func (d *eventDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(Event)
 	if !ok {
 		return
 	}
 
-	str := fmt.Sprintf("%d. %s", index+1, i)
+	str := fmt.Sprintf("%d. %s", index+1, i.Message)
 
 	fn := itemStyle.Render
 	if index == m.Index() {
