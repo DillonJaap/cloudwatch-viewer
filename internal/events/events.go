@@ -44,7 +44,7 @@ func GetEvents(ctx context.Context) []types.OutputLogEvent {
 	logEventsOutput, err := cwClient.GetLogEvents(ctx, &cloudwatchlogs.GetLogEventsInput{
 		LogStreamName: logStreamName,
 		LogGroupName:  logGroupName,
-		Limit:         aws.Int32(30),
+		Limit:         aws.Int32(45),
 		StartFromHead: aws.Bool(true),
 	})
 	if err != nil {

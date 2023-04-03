@@ -36,11 +36,12 @@ func (e Event) getTruncatedDescription() string {
 
 type eventDelegate struct{}
 
-func (d *eventDelegate) Height() int { return 1 }
+func (d *eventDelegate) Height() int { return 5 }
 
 func (d *eventDelegate) Spacing() int { return 0 }
 
 func (d *eventDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+	m.VisibleItems()
 	return nil
 }
 
@@ -65,36 +66,57 @@ func (d *eventDelegate) Render(w io.Writer, m list.Model, index int, listItem li
 func GetLogEventsAsItemList() []list.Item {
 	logEvents := events.GetEvents(context.Background())
 
-	var formattedEvents []list.Item
+	var events []list.Item
 
 	for k := range logEvents {
 		msg := aws.ToString(logEvents[k].Message)
 		timeStamp := logEvents[k].Timestamp
 
-		formattedEvents = append(
-			formattedEvents,
+		events = append(
+			events,
 			Event{
-				Message:   formatMsg(msg),
+				Message:   msg,
 				TimeStamp: fmt.Sprintf("%v", *timeStamp),
 			},
 		)
 	}
 
-	return formattedEvents
+	return events
 }
 
-func formatMsg(in string) string {
+func formatList(itemList []list.Item, formatAsJson bool) []list.Item {
+	var formattedList []list.Item
+	for _, item := range itemList {
+		event, ok := item.(Event)
+		if !ok {
+			formattedList = append(formattedList, item)
+			continue
+		}
+
+		formattedList = append(
+			formattedList,
+			Event{
+				Message:   formatMessage(event.Message, formatAsJson),
+				TimeStamp: event.TimeStamp,
+			},
+		)
+	}
+	return formattedList
+}
+
+func formatMessage(in string, formatAsJson bool) string {
 	in = strings.ReplaceAll(in, "\t", " ")
 
 	regx, _ := regexp.Compile(`(.*)(?P<json>{.*})(.*)`)
 	submatches := regx.FindStringSubmatch(in)
 
-	if len(submatches) > 1 {
-		return submatches[1] +
-			"\n" + formatJson(submatches[2]) +
-			"\n" + submatches[3]
+	if len(submatches) == 0 || !formatAsJson {
+		return in
 	}
-	return in
+
+	return submatches[1] +
+		"\n" + formatJson(submatches[2]) +
+		"\n" + submatches[3]
 }
 
 func formatJson(in string) string {
