@@ -48,7 +48,9 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		verticalMarginHeight := 4
 		m.List.SetWidth(msg.Width)
+		m.List.SetHeight(msg.Height/4 - verticalMarginHeight)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {

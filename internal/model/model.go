@@ -13,7 +13,13 @@ import (
 )
 
 var (
-	docStyle          = lipgloss.NewStyle().Margin(1, 1)
+	modelStyle = lipgloss.NewStyle().
+			BorderStyle(lipgloss.HiddenBorder())
+
+	selectedModelStyle = lipgloss.NewStyle().
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderForeground(lipgloss.Color("69"))
+
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
@@ -49,15 +55,37 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) View() string {
-	//list := m.eventsModel.List
-	//items := list.Items()
-	//currentItem := items[list.Index()]
+	var (
+		logGroupList string
+		eventList    string
+		message      string
+	)
 
-	logGroupList := docStyle.Render(m.logGroupList.View())
-	eventList := docStyle.Render(m.eventsList.View())
-	message := docStyle.Render(m.viewportEvents.View())
+	// TODO clean this up
+	switch m.selected {
+	case groupListSelected:
+		logGroupList = selectedModelStyle.Render(m.logGroupList.View())
+		eventList = modelStyle.Render(m.eventsList.View())
+		message = modelStyle.Render(m.viewportEvents.View())
+	case eventListSelected:
+		eventList = selectedModelStyle.Render(m.eventsList.View())
+		logGroupList = modelStyle.Render(m.logGroupList.View())
+		message = modelStyle.Render(m.viewportEvents.View())
+	case viewportSelected:
+		message = selectedModelStyle.Render(m.viewportEvents.View())
+		eventList = modelStyle.Render(m.eventsList.View())
+		logGroupList = modelStyle.Render(m.logGroupList.View())
+	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Center, logGroupList, eventList, message)
+	return lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			logGroupList,
+			eventList,
+		),
+		message,
+	)
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -92,6 +120,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewportEvents.Viewport.SetContent(event.FormatMessage(eventValue, true))
 		return m, nil
 	}
+
+	m.logGroupList, cmd = m.logGroupList.Update(msg)
+	cmds = append(cmds, cmd)
 
 	m.eventsList, cmd = m.eventsList.Update(msg)
 	cmds = append(cmds, cmd)

@@ -6,4 +6,5 @@
 * add search all log stream filtering
 * add saved searches
 * paginate log events & streams
+* figure out best way to align boxes
 

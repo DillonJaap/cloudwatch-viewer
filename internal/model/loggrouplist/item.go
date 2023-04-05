@@ -10,6 +10,8 @@ import (
 	cw "clviewer/internal/cloudwatch"
 )
 
+const maxDescriptionLength = 50
+
 // Item type
 type Item string
 
@@ -28,4 +30,11 @@ func GetLogGroupsAsItemList(pattern string) []list.Item {
 	}
 
 	return groups
+}
+
+func (i Item) getTruncatedDescription() string {
+	if len(i) > maxDescriptionLength {
+		return string(i[0:maxDescriptionLength-3] + "...")
+	}
+	return string(i)
 }
