@@ -1,4 +1,4 @@
-package logevent
+package logeventlist
 
 import (
 	"fmt"
@@ -9,7 +9,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const listHeight = 14
+type UpdateViewPort struct{}
+
+const listHeight = 50
 
 var (
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
@@ -31,7 +33,7 @@ func DefaultModel() Model {
 	itemList := GetLogEventsAsItemList()
 	itemList = formatList(itemList, false)
 
-	eventList := list.New(itemList, &eventDelegate{}, 0, 30)
+	eventList := list.New(itemList, &ItemDelegate{}, 0, 60)
 	eventList.SetShowStatusBar(false)
 	eventList.SetFilteringEnabled(true)
 	eventList.Title = "Log Events"
@@ -49,23 +51,32 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
 		return m, nil
+
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			e, ok := m.List.SelectedItem().(Event)
+			e, ok := m.List.SelectedItem().(Item)
 			if ok {
 				m.Choice = e.Message
 			}
-			return m, tea.Quit
+			return m, nil
+		default:
+			cmd = func() tea.Msg { return UpdateViewPort{} }
+			cmds = append(cmds, cmd)
 		}
 	}
-	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {

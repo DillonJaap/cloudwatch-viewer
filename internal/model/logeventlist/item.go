@@ -1,70 +1,46 @@
-package logevent
+package logeventlist
 
 import (
-	"clviewer/internal/events"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+
+	cw "clviewer/internal/cloudwatch"
+)
+
+var (
+	_ list.Item         = Item{}          // Item implements list.Item
+	_ list.ItemDelegate = &ItemDelegate{} // ItemDelegate implements list.ItemDelegate
 )
 
 const maxDescriptionLength = 50
 
-type Event struct {
+// List.Item that contains cloudwatch events as its content
+type Item struct {
 	TimeStamp string
 	Message   string
 }
 
-func (e Event) Title() string       { return e.TimeStamp }
-func (e Event) Description() string { return e.getTruncatedDescription() }
-func (e Event) FilterValue() string { return e.Message }
+func (i Item) Title() string       { return i.TimeStamp }
+func (i Item) Description() string { return i.getTruncatedDescription() }
+func (i Item) FilterValue() string { return i.Message }
 
-func (e Event) getTruncatedDescription() string {
+func (i Item) getTruncatedDescription() string {
 	// TODO make const
-	if len(e.Message) > maxDescriptionLength {
-		return e.Message[0:maxDescriptionLength-3] + "..."
+	if len(i.Message) > maxDescriptionLength {
+		return i.Message[0:maxDescriptionLength-3] + "..."
 	}
-	return e.Message
-}
-
-type eventDelegate struct{}
-
-func (d *eventDelegate) Height() int { return 5 }
-
-func (d *eventDelegate) Spacing() int { return 0 }
-
-func (d *eventDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
-	m.VisibleItems()
-	return nil
-}
-
-func (d *eventDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(Event)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i.Message)
-
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + s[0])
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
+	return i.Message
 }
 
 func GetLogEventsAsItemList() []list.Item {
-	logEvents := events.GetEvents(context.Background())
+	logEvents := cw.GetEvents(context.Background())
 
 	var events []list.Item
 
@@ -74,7 +50,7 @@ func GetLogEventsAsItemList() []list.Item {
 
 		events = append(
 			events,
-			Event{
+			Item{
 				Message:   msg,
 				TimeStamp: fmt.Sprintf("%v", *timeStamp),
 			},
@@ -87,7 +63,7 @@ func GetLogEventsAsItemList() []list.Item {
 func formatList(itemList []list.Item, formatAsJson bool) []list.Item {
 	var formattedList []list.Item
 	for _, item := range itemList {
-		event, ok := item.(Event)
+		event, ok := item.(Item)
 		if !ok {
 			formattedList = append(formattedList, item)
 			continue
@@ -95,8 +71,8 @@ func formatList(itemList []list.Item, formatAsJson bool) []list.Item {
 
 		formattedList = append(
 			formattedList,
-			Event{
-				Message:   formatMessage(event.Message, formatAsJson),
+			Item{
+				Message:   FormatMessage(event.Message, formatAsJson),
 				TimeStamp: event.TimeStamp,
 			},
 		)
@@ -104,7 +80,7 @@ func formatList(itemList []list.Item, formatAsJson bool) []list.Item {
 	return formattedList
 }
 
-func formatMessage(in string, formatAsJson bool) string {
+func FormatMessage(in string, formatAsJson bool) string {
 	in = strings.ReplaceAll(in, "\t", " ")
 
 	regx, _ := regexp.Compile(`(.*)(?P<json>{.*})(.*)`)

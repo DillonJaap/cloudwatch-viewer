@@ -7,10 +7,22 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"clviewer/internal/model/logevent"
+	event "clviewer/internal/model/logeventlist"
+	vp "clviewer/internal/model/logeventviewport"
+	group "clviewer/internal/model/loggrouplist"
 )
 
-var docStyle = lipgloss.NewStyle().Margin(1, 2)
+const listHeight = 15
+
+var (
+	docStyle          = lipgloss.NewStyle().Margin(1, 1)
+	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
+	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+)
 
 var (
 	eventListSelected = 1
@@ -18,28 +30,28 @@ var (
 )
 
 type Model struct {
-	eventsModel         logevent.Model
-	viewportEventsModel viewPortModel
-	logGroupsModel      LogGroupModel
+	eventsModel         event.Model
+	viewportEventsModel vp.Model
+	logGroupsModel      group.Model
 	selected            int
 }
 
 func InitialModel(ctx context.Context) Model {
 	items := []list.Item{
-		item("Ramen"),
-		item("Tomato Soup"),
-		item("Hamburgers"),
-		item("Cheeseburgers"),
-		item("Currywurst"),
-		item("Okonomiyaki"),
-		item("Pasta"),
-		item("Fillet Mignon"),
-		item("Caviar"),
-		item("Just Wine"),
+		group.Item("Ramen"),
+		group.Item("Tomato Soup"),
+		group.Item("Hamburgers"),
+		group.Item("Cheeseburgers"),
+		group.Item("Currywurst"),
+		group.Item("Okonomiyaki"),
+		group.Item("Pasta"),
+		group.Item("Fillet Mignon"),
+		group.Item("Caviar"),
+		group.Item("Just Wine"),
 	}
 	const defaultWidth = 20
 
-	logGroupList := list.New(items, logGroupDelegate{}, defaultWidth, listHeight)
+	logGroupList := list.New(items, group.LogGroupDelegate{}, defaultWidth, listHeight)
 	logGroupList.SetShowStatusBar(false)
 	logGroupList.SetFilteringEnabled(false)
 	logGroupList.Title = "What do you want for dinner?"
@@ -48,9 +60,9 @@ func InitialModel(ctx context.Context) Model {
 	logGroupList.Styles.HelpStyle = helpStyle
 
 	return Model{
-		eventsModel:         logevent.DefaultModel(),
-		viewportEventsModel: initialViewPortModel("test"),
-		logGroupsModel:      LogGroupModel{list: logGroupList, choice: ""},
+		eventsModel:         event.DefaultModel(),
+		viewportEventsModel: vp.InitialViewPortModel("test"),
+		logGroupsModel:      group.Model{List: logGroupList, Choice: ""},
 		selected:            eventListSelected,
 	}
 }
@@ -65,6 +77,7 @@ func (m Model) View() string {
 	//currentItem := items[list.Index()]
 
 	//logGroupList := docStyle.Render(m.logGroupsModel.View())
+
 	eventList := docStyle.Render(m.eventsModel.View())
 	message := docStyle.Render(m.viewportEventsModel.View())
 
@@ -91,16 +104,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewportEventsModel, cmd = m.viewportEventsModel.Update(msg)
 			return m, cmd
 		}
-	default:
+	case event.UpdateViewPort:
 		eventValue := m.eventsModel.List.SelectedItem().FilterValue()
-		m.viewportEventsModel.events = eventValue
-
-		m.eventsModel, cmd = m.eventsModel.Update(msg)
-		cmds = append(cmds, cmd)
-
-		m.viewportEventsModel, cmd = m.viewportEventsModel.Update(msg)
-		cmds = append(cmds, cmd)
+		m.viewportEventsModel.Events = eventValue
 	}
+
+	m.eventsModel, cmd = m.eventsModel.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.viewportEventsModel, cmd = m.viewportEventsModel.Update(msg)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }

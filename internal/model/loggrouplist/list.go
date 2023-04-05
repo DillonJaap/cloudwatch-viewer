@@ -1,4 +1,4 @@
-package model
+package loggrouplist
 
 import (
 	"fmt"
@@ -21,21 +21,21 @@ var (
 )
 
 // Item type
-type item string
+type Item string
 
-func (i item) FilterValue() string { return "" }
+func (i Item) FilterValue() string { return "" }
 
 // Item Delegate
-type logGroupDelegate struct{}
+type LogGroupDelegate struct{}
 
-func (d logGroupDelegate) Height() int { return 1 }
+func (d LogGroupDelegate) Height() int { return 1 }
 
-func (d logGroupDelegate) Spacing() int { return 0 }
+func (d LogGroupDelegate) Spacing() int { return 0 }
 
-func (d logGroupDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
+func (d LogGroupDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
 
-func (d logGroupDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
+func (d LogGroupDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(Item)
 	if !ok {
 		return
 	}
@@ -53,40 +53,40 @@ func (d logGroupDelegate) Render(w io.Writer, m list.Model, index int, listItem 
 }
 
 // Log group model
-type LogGroupModel struct {
-	list   list.Model
-	choice string
+type Model struct {
+	List   list.Model
+	Choice string
 }
 
-func (m LogGroupModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m LogGroupModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width)
+		m.List.SetWidth(msg.Width)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			i, ok := m.list.SelectedItem().(item)
+			i, ok := m.List.SelectedItem().(Item)
 			if ok {
-				m.choice = string(i)
+				m.Choice = string(i)
 			}
 			return m, tea.Quit
 		}
 	}
 	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
+	m.List, cmd = m.List.Update(msg)
 	return m, cmd
 }
 
-func (m LogGroupModel) View() string {
-	if m.choice != "" {
-		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
+func (m Model) View() string {
+	if m.Choice != "" {
+		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.Choice))
 	}
-	return "\n" + m.list.View()
+	return "\n" + m.List.View()
 }
