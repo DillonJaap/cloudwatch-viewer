@@ -55,7 +55,7 @@ func GetEvents(ctx context.Context) []types.OutputLogEvent {
 
 }
 
-func GetLogGroup(ctx context.Context, in cloudwatchlogs.DescribeLogGroupsInput) ([]types.LogGroup, error) {
+func GetLogGroups(ctx context.Context, in cloudwatchlogs.DescribeLogGroupsInput) []types.LogGroup {
 	// Load the Shared AWS Configuration(~/.aws/config)
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -69,7 +69,6 @@ func GetLogGroup(ctx context.Context, in cloudwatchlogs.DescribeLogGroupsInput) 
 	logGroupsOutput, err := cwClient.DescribeLogGroups(ctx, &in)
 	if err != nil {
 		log.Fatal(err)
-		return []types.LogGroup{}, err
 	}
-	return logGroupsOutput.LogGroups, nil
+	return logGroupsOutput.LogGroups
 }

@@ -2,7 +2,6 @@ package loggrouplist
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -20,49 +19,33 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
-// Item type
-type Item string
-
-func (i Item) FilterValue() string { return "" }
-
-// Item Delegate
-type LogGroupDelegate struct{}
-
-func (d LogGroupDelegate) Height() int { return 1 }
-
-func (d LogGroupDelegate) Spacing() int { return 0 }
-
-func (d LogGroupDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
-
-func (d LogGroupDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(Item)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + s[0])
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
-}
-
 // Log group model
 type Model struct {
 	List   list.Model
 	Choice string
 }
 
+func New() Model {
+	itemList := GetLogGroupsAsItemList("/aws/lambda")
+
+	groupList := list.New(itemList, &ItemDelegate{}, 0, 0)
+	groupList.SetShowStatusBar(false)
+	groupList.SetFilteringEnabled(true)
+	groupList.Title = "Log Groups"
+	groupList.Styles.PaginationStyle = paginationStyle
+	groupList.Styles.HelpStyle = helpStyle
+
+	return Model{
+		List:   groupList,
+		Choice: "",
+	}
+}
+
 func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)

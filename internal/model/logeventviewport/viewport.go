@@ -7,27 +7,18 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	event "clviewer/internal/model/logeventlist"
-)
-
-var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
 const useHighPerformanceRenderer = false
 
 var (
-	viewportTitleStyle = func() lipgloss.Style {
+	titleStyle = func() lipgloss.Style {
 		b := lipgloss.RoundedBorder()
 		b.Right = "├"
 		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
 	}()
 
-	viewportInfoStyle = func() lipgloss.Style {
+	infoStyle = func() lipgloss.Style {
 		b := lipgloss.RoundedBorder()
 		b.Left = "┤"
 		return titleStyle.Copy().BorderStyle(b)
@@ -40,7 +31,7 @@ type Model struct {
 	Viewport viewport.Model
 }
 
-func InitialViewPortModel(events string) Model {
+func New(events string) Model {
 	return Model{
 		Events:   events,
 		Ready:    false,
@@ -94,18 +85,17 @@ func (m Model) View() string {
 	if !m.Ready {
 		return "\n  Initializing..."
 	}
-	m.Viewport.SetContent(event.FormatMessage(m.Events, true))
-	return fmt.Sprintf("%s\n%s", m.headerView(), m.Viewport.View())
+	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.Viewport.View(), m.footerView())
 }
 
 func (m Model) headerView() string {
-	title := viewportTitleStyle.Render("Mr. Pager")
+	title := titleStyle.Render("Mr. Pager")
 	line := strings.Repeat("─", max(0, m.Viewport.Width-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
 
 func (m Model) footerView() string {
-	info := viewportInfoStyle.Render(fmt.Sprintf("%3.f%%", m.Viewport.ScrollPercent()*100))
+	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.Viewport.ScrollPercent()*100))
 	line := strings.Repeat("─", max(0, m.Viewport.Width-lipgloss.Width(info)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
