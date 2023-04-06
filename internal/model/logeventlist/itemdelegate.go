@@ -22,9 +22,9 @@ func (i *ItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 func (i *ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	var str string
 
-	event, ok := listItem.(Item)
+	item, ok := listItem.(Item)
 	if ok {
-		str = fmt.Sprintf("%s", event.getTruncatedDescription())
+		str = fmt.Sprintf("%s", item.getTruncatedDescription(m.Width()-10))
 	} else {
 		str = fmt.Sprintf("%s", listItem.FilterValue())
 	}

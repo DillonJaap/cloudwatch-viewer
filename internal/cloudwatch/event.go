@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
-func GetEvents(ctx context.Context) []types.OutputLogEvent {
+func GetEvents(ctx context.Context, logGropPattern string) []types.OutputLogEvent {
 	// Load the Shared AWS Configuration(~/.aws/config)
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -22,7 +22,7 @@ func GetEvents(ctx context.Context) []types.OutputLogEvent {
 
 	// get log groups
 	logGroupsOutput, err := cwClient.DescribeLogGroups(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-		LogGroupNamePattern: aws.String("/aws/lambda/dev-djaap-event-handlers-batch-processor"),
+		LogGroupNamePattern: aws.String(logGropPattern),
 	})
 	if err != nil {
 		log.Fatal(err)

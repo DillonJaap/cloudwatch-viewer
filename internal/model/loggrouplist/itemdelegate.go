@@ -23,7 +23,7 @@ func (d ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
-	str := fmt.Sprintf("%s", item.getTruncatedDescription())
+	str := fmt.Sprintf("%s", item.getTruncatedDescription(m.Width()-10))
 
 	fn := itemStyle.Render
 	if index == m.Index() {

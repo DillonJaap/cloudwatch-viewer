@@ -1,8 +1,6 @@
 package logeventlist
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -27,7 +25,7 @@ type Model struct {
 
 func New() Model {
 	//defaultWidth := 20
-	itemList := GetLogEventsAsItemList()
+	itemList := GetLogEventsAsItemList("/aws/lambda/dev-djaap-event-handlers-batch-processor")
 	itemList = formatList(itemList, false)
 
 	eventList := list.New(itemList, &ItemDelegate{}, 0, 0)
@@ -72,7 +70,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			)
 			cmds = append(cmds, cmd)
 		}
+	case commands.UpdateEventListItemsMsg:
+		itemList := GetLogEventsAsItemList(msg.Group)
+		itemList = formatList(itemList, false)
+		cmd = m.List.SetItems(itemList)
+		cmds = append(cmds, cmd)
 	}
+
 	m.List, cmd = m.List.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -80,8 +84,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.Choice != "" {
-		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.Choice))
-	}
 	return "\n" + m.List.View()
 }

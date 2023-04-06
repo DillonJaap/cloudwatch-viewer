@@ -2,8 +2,7 @@ package model
 
 import (
 	"context"
-	"fmt"
-	"os"
+	"log"
 
 	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
@@ -32,7 +31,7 @@ const (
 
 type Model struct {
 	eventsList     event.Model
-	viewportEvents vp.Model
+	viewportEvents *vp.Model
 	logGroupList   group.Model
 	keys           keyMap
 	help           help.Model
@@ -80,7 +79,7 @@ func (m *Model) View() string {
 	}
 
 	logGroupAndEvents := lipgloss.JoinVertical(
-		lipgloss.Center,
+		lipgloss.Left,
 		logGroupList,
 		eventList,
 	)
@@ -92,7 +91,7 @@ func (m *Model) View() string {
 	)
 
 	return lipgloss.JoinVertical(
-		lipgloss.Center,
+		lipgloss.Left,
 		logView,
 		helpView,
 	)
@@ -114,10 +113,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		return m.updateWindowSizes(msg)
 	case commands.UpdateViewPortContentMsg:
-		return m.viewportEvents.Update(msg)
-	default:
-		return m.updateSubModules(msg)
+		m.viewportEvents.Update(msg)
 	}
+	log.Printf("%+v\n", *m.viewportEvents)
+	return m.updateSubModules(msg)
 }
 
 func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
@@ -139,19 +138,6 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	logEventListHeight := height - logGroupListHeight
 	eventViewPortHeight := height
 
-	os.WriteFile(
-		"log",
-		[]byte(fmt.Sprintf(
-			"height: %d, width: %d\n"+
-				"groupheight: %d, eventheight: %d\n",
-			height,
-			width,
-			logGroupListHeight,
-			logEventListHeight,
-		)),
-		0665,
-	)
-
 	model, cmd = m.logGroupList.Update(tea.WindowSizeMsg{
 		Width:  leftHandWidth - borderMarginSize,
 		Height: logGroupListHeight - borderMarginSize,
@@ -170,7 +156,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 		Width:  rightHandWidth - borderMarginSize,
 		Height: eventViewPortHeight - borderMarginSize,
 	})
-	m.viewportEvents = model.(vp.Model)
+	m.viewportEvents = model.(*vp.Model)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -189,7 +175,7 @@ func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.eventsList = model.(event.Model)
 	case viewportSelected:
 		model, cmd = m.viewportEvents.Update(msg)
-		m.viewportEvents = model.(vp.Model)
+		m.viewportEvents = model.(*vp.Model)
 	}
 	return m, cmd
 }
@@ -210,7 +196,7 @@ func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.viewportEvents.Update(msg)
-	m.viewportEvents = model.(vp.Model)
+	m.viewportEvents = model.(*vp.Model)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)

@@ -19,8 +19,6 @@ var (
 	_ list.ItemDelegate = &ItemDelegate{} // ItemDelegate implements list.ItemDelegate
 )
 
-const maxDescriptionLength = 50
-
 // List.Item that contains cloudwatch events as its content
 type Item struct {
 	TimeStamp string
@@ -28,18 +26,23 @@ type Item struct {
 }
 
 func (i Item) Title() string       { return i.TimeStamp }
-func (i Item) Description() string { return i.getTruncatedDescription() }
+func (i Item) Description() string { return "" }
 func (i Item) FilterValue() string { return i.Message }
 
-func (i Item) getTruncatedDescription() string {
-	if len(i.Message) > maxDescriptionLength {
-		return i.Message[0:maxDescriptionLength-3] + "..."
+func (i Item) getTruncatedDescription(maxLength int) string {
+	msg := strings.ReplaceAll(i.Message, "\t", " ")
+	msg = strings.ReplaceAll(msg, "\n", " ")
+	if len(msg) > maxLength {
+		return msg[0:maxLength-3] + "..."
 	}
-	return i.Message
+	return msg
 }
 
-func GetLogEventsAsItemList() []list.Item {
-	logEvents := cw.GetEvents(context.Background())
+func GetLogEventsAsItemList(logGroupPattern string) []list.Item {
+	logEvents := cw.GetEvents(
+		context.Background(),
+		logGroupPattern,
+	)
 
 	var events []list.Item
 

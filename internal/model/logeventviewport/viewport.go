@@ -2,6 +2,7 @@ package logeventviewport
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -40,7 +41,7 @@ var (
 	viewPortStyle = lipgloss.NewStyle().Padding(2)
 )
 
-var _ tea.Model = Model{}
+var _ tea.Model = &Model{}
 
 type Model struct {
 	Events   string
@@ -48,8 +49,8 @@ type Model struct {
 	Viewport viewport.Model
 }
 
-func New(events string) Model {
-	return Model{
+func New(events string) *Model {
+	return &Model{
 		Events: events,
 		Ready:  false,
 		Viewport: viewport.Model{
@@ -58,11 +59,11 @@ func New(events string) Model {
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -90,6 +91,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case commands.UpdateViewPortContentMsg:
 		m.Viewport.SetContent(msg.Content)
+		log.Printf(msg.Content)
 		return m, nil
 	}
 
@@ -100,7 +102,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m *Model) View() string {
 	if !m.Ready {
 		return "\n  Initializing..."
 	}
