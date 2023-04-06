@@ -15,7 +15,7 @@ const maxDescriptionLength = 50
 // Item type
 type Item string
 
-func (i Item) FilterValue() string { return "" }
+func (i Item) FilterValue() string { return string(i) }
 
 func GetLogGroupsAsItemList(pattern string) []list.Item {
 	logGroups := cw.GetLogGroups(context.Background(), cloudwatchlogs.DescribeLogGroupsInput{

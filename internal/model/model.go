@@ -86,8 +86,8 @@ func (m *Model) View() string {
 
 	logView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		logMessageViewPort,
 		logGroupAndEvents,
+		logMessageViewPort,
 	)
 
 	return lipgloss.JoinVertical(
