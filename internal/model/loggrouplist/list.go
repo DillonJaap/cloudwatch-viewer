@@ -19,6 +19,8 @@ var (
 )
 
 // Log group model
+var _ tea.Model = Model{}
+
 type Model struct {
 	List   list.Model
 	Choice string
@@ -44,7 +46,7 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)

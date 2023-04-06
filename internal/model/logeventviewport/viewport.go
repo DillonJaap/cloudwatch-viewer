@@ -7,6 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"clviewer/internal/commands"
 )
 
 const useHighPerformanceRenderer = false
@@ -38,6 +40,8 @@ var (
 	viewPortStyle = lipgloss.NewStyle().Padding(2)
 )
 
+var _ tea.Model = Model{}
+
 type Model struct {
 	Events   string
 	Ready    bool
@@ -58,7 +62,7 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -84,6 +88,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if useHighPerformanceRenderer {
 			cmds = append(cmds, viewport.Sync(m.Viewport))
 		}
+	case commands.UpdateViewPortContentMsg:
+		m.Viewport.SetContent(msg.Content)
+		return m, nil
 	}
 
 	// Handle keyboard and mouse events in the viewport

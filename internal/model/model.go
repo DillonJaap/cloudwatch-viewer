@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"clviewer/internal/commands"
 	event "clviewer/internal/model/logeventlist"
 	vp "clviewer/internal/model/logeventviewport"
 	group "clviewer/internal/model/loggrouplist"
@@ -112,10 +113,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		return m.updateWindowSizes(msg)
-	case event.UpdateViewPortContent:
-		eventValue := m.eventsList.List.SelectedItem().FilterValue()
-		m.viewportEvents.Viewport.SetContent(event.FormatMessage(eventValue, true))
-		return m, nil
+	case commands.UpdateViewPortContentMsg:
+		return m.viewportEvents.Update(msg)
 	default:
 		return m.updateSubModules(msg)
 	}
@@ -123,8 +122,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
+		cmd   tea.Cmd
+		cmds  []tea.Cmd
+		model tea.Model
 	)
 
 	height := msg.Height - lipgloss.Height(m.help.View(keys))
@@ -152,57 +152,65 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 		0665,
 	)
 
-	m.logGroupList, cmd = m.logGroupList.Update(tea.WindowSizeMsg{
+	model, cmd = m.logGroupList.Update(tea.WindowSizeMsg{
 		Width:  leftHandWidth - borderMarginSize,
 		Height: logGroupListHeight - borderMarginSize,
 	})
+	m.logGroupList = model.(group.Model)
 	cmds = append(cmds, cmd)
 
-	m.eventsList, cmd = m.eventsList.Update(tea.WindowSizeMsg{
+	model, cmd = m.eventsList.Update(tea.WindowSizeMsg{
 		Width:  leftHandWidth - borderMarginSize,
 		Height: logEventListHeight - borderMarginSize,
 	})
+	m.eventsList = model.(event.Model)
 	cmds = append(cmds, cmd)
 
-	m.viewportEvents, cmd = m.viewportEvents.Update(tea.WindowSizeMsg{
+	model, cmd = m.viewportEvents.Update(tea.WindowSizeMsg{
 		Width:  rightHandWidth - borderMarginSize,
 		Height: eventViewPortHeight - borderMarginSize,
 	})
+	m.viewportEvents = model.(vp.Model)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmd tea.Cmd = nil
+	var model tea.Model
 
 	switch m.selected {
 	case groupListSelected:
-		m.logGroupList, cmd = m.logGroupList.Update(msg)
-		return m, cmd
+		model, cmd = m.logGroupList.Update(msg)
+		m.logGroupList = model.(group.Model)
 	case eventListSelected:
-		m.eventsList, cmd = m.eventsList.Update(msg)
-		return m, cmd
+		model, cmd = m.eventsList.Update(msg)
+		m.eventsList = model.(event.Model)
 	case viewportSelected:
-		m.viewportEvents, cmd = m.viewportEvents.Update(msg)
-		return m, cmd
+		model, cmd = m.viewportEvents.Update(msg)
+		m.viewportEvents = model.(vp.Model)
 	}
-	return m, nil
+	return m, cmd
 }
 
 func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
+		cmd   tea.Cmd
+		cmds  []tea.Cmd
+		model tea.Model
 	)
 
-	m.logGroupList, cmd = m.logGroupList.Update(msg)
+	model, cmd = m.logGroupList.Update(msg)
+	m.logGroupList = model.(group.Model)
 	cmds = append(cmds, cmd)
 
-	m.eventsList, cmd = m.eventsList.Update(msg)
+	model, cmd = m.eventsList.Update(msg)
+	m.eventsList = model.(event.Model)
 	cmds = append(cmds, cmd)
 
-	m.viewportEvents, cmd = m.viewportEvents.Update(msg)
+	model, cmd = m.viewportEvents.Update(msg)
+	m.viewportEvents = model.(vp.Model)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)

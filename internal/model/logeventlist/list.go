@@ -6,9 +6,9 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-)
 
-type UpdateViewPortContent struct{}
+	"clviewer/internal/commands"
+)
 
 var (
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
@@ -17,6 +17,8 @@ var (
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
+
+var _ tea.Model = Model{}
 
 type Model struct {
 	List   list.Model
@@ -45,7 +47,7 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -65,7 +67,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 			return m, nil
 		default:
-			cmd = func() tea.Msg { return UpdateViewPortContent{} }
+			cmd = commands.UpdateViewPort(
+				m.List.SelectedItem().FilterValue(),
+			)
 			cmds = append(cmds, cmd)
 		}
 	}
