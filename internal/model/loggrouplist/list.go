@@ -11,7 +11,6 @@ import (
 const listHeight = 14
 
 var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
@@ -48,9 +47,8 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		verticalMarginHeight := 4
 		m.List.SetWidth(msg.Width)
-		m.List.SetHeight(msg.Height/4 - verticalMarginHeight)
+		m.List.SetHeight(msg.Height)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {

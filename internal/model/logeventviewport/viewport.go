@@ -58,12 +58,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 		if !m.Ready {
 			m.Viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.Viewport.YPosition = headerHeight
+			//m.Viewport.YPosition = headerHeight
 			m.Viewport.HighPerformanceRendering = useHighPerformanceRenderer
 			m.Viewport.SetContent(m.Events)
 			m.Ready = true
 
-			m.Viewport.YPosition = headerHeight + 1
+			//m.Viewport.YPosition = headerHeight + 1
 		} else {
 			m.Viewport.Width = msg.Width
 			m.Viewport.Height = msg.Height - verticalMarginHeight

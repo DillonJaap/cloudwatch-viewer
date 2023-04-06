@@ -32,7 +32,6 @@ func (i Item) Description() string { return i.getTruncatedDescription() }
 func (i Item) FilterValue() string { return i.Message }
 
 func (i Item) getTruncatedDescription() string {
-	// TODO make const
 	if len(i.Message) > maxDescriptionLength {
 		return i.Message[0:maxDescriptionLength-3] + "..."
 	}
