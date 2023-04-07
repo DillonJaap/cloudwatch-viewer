@@ -12,3 +12,8 @@
 - [ ] can see event messages as soon as tui loads
 - [ ] add styles module
 - [ ] refactor getItemListAsString() so that it is a array of strings, and so it only needs to be called once
+- [ ] add refresh button
+- [x] add collapse/expand all
+- [ ] proper filtering for messages
+- [ ] add sane defaults
+

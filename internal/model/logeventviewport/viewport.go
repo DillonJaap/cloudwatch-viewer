@@ -41,13 +41,15 @@ var (
 var _ tea.Model = &Model{}
 
 type Model struct {
+	Title    string
 	Events   string
 	Ready    bool
 	Viewport viewport.Model
 }
 
-func New(events string) *Model {
+func New(title string, events string) *Model {
 	return &Model{
+		Title:    title,
 		Events:   events,
 		Ready:    false,
 		Viewport: viewport.Model{},
@@ -102,20 +104,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) FormatList(list []string) string {
 	var str string
-	for i, msg := range list {
-		if i%2 == 1 {
-			str += lipgloss.NewStyle().
-				Background(lipgloss.Color("233")).
-				PaddingRight(m.Viewport.Width-lipgloss.Width(msg)).
-				PaddingLeft(2).
-				Render(msg) + "\n"
-		} else {
-			str += lipgloss.NewStyle().
-				PaddingLeft(2).
-				Render(msg) + "\n"
-		}
+	for _, msg := range list {
+		str += msg + "\n"
 	}
-	return str
+	return lipgloss.NewStyle().
+		PaddingLeft(2).
+		Render(str)
 }
 
 func (m *Model) View() string {
@@ -134,7 +128,7 @@ func (m *Model) View() string {
 }
 
 func (m Model) headerView() string {
-	title := titleStyle.Render("Log Messages")
+	title := titleStyle.Render(m.Title)
 	line := lineStyle.Render(
 		strings.Repeat("─", max(0, m.Viewport.Width-lipgloss.Width(title))),
 	)

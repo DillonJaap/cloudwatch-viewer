@@ -32,6 +32,21 @@ func GetLogGroupsAsItemList(pattern string) []list.Item {
 	return groups
 }
 
+func GetLogStreamsAsItemList(pattern string) []list.Item {
+	logStreams := cw.GetLogStreams(context.Background(), cloudwatchlogs.DescribeLogStreamsInput{
+		LogGroupName: aws.String(pattern),
+	})
+
+	var streams []list.Item
+
+	for k := range logStreams {
+		name := aws.ToString(logStreams[k].LogStreamName)
+		streams = append(streams, Item(name))
+	}
+
+	return streams
+}
+
 func (i Item) getTruncatedDescription(maxLength int) string {
 	if maxLength < 10 {
 		maxLength = 10

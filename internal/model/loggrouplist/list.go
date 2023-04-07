@@ -11,6 +11,13 @@ import (
 const listHeight = 14
 
 var (
+	titleStyle = lipgloss.
+			NewStyle().
+			Background(lipgloss.Color("98")).
+			Foreground(lipgloss.Color("230")).
+			PaddingLeft(1).
+			PaddingRight(1)
+
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
@@ -26,22 +33,19 @@ type Model struct {
 	Choice string
 }
 
-func New() Model {
-	itemList := GetLogGroupsAsItemList("/aws/lambda")
+func New(
+	title string,
+	name string,
+) Model {
+	itemList := GetLogGroupsAsItemList(name)
 
 	groupList := list.New(itemList, &ItemDelegate{}, 0, 0)
 	groupList.SetShowStatusBar(false)
 	groupList.SetFilteringEnabled(true)
-	groupList.Title = "Log Groups"
+	groupList.Title = title
 	groupList.Styles.PaginationStyle = paginationStyle
 	groupList.SetShowHelp(false)
-	groupList.Styles.Title = lipgloss.
-		NewStyle().
-		Background(lipgloss.Color("98")).
-		Foreground(lipgloss.Color("230")).
-		PaddingLeft(1).
-		PaddingRight(1)
-
+	groupList.Styles.Title = titleStyle
 	return Model{
 		List:   groupList,
 		Choice: "",
@@ -68,7 +72,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Choice = string(i)
 			}
 
-			return m, commands.UpdateEventListItems(m.Choice)
+			return m, commands.UpdateStreamListItems(m.Choice)
 		}
 	}
 	var cmd tea.Cmd

@@ -10,6 +10,11 @@ type UpdateViewPortContentMsg struct {
 }
 
 type UpdateEventListItemsMsg struct {
+	Group  string
+	Stream string
+}
+
+type UpdateStreamListItemsMsg struct {
 	Group string
 }
 
@@ -25,6 +30,14 @@ func UpdateViewPort(content []string, yOffset int) tea.Cmd {
 func UpdateEventListItems(group string) tea.Cmd {
 	return func() tea.Msg {
 		return UpdateEventListItemsMsg{
+			Group: group,
+		}
+	}
+}
+
+func UpdateStreamListItems(group string) tea.Cmd {
+	return func() tea.Msg {
+		return UpdateStreamListItemsMsg{
 			Group: group,
 		}
 	}

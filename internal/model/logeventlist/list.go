@@ -9,6 +9,13 @@ import (
 )
 
 var (
+	titleStyle = lipgloss.
+			NewStyle().
+			Background(lipgloss.Color("98")).
+			Foreground(lipgloss.Color("230")).
+			PaddingLeft(1).
+			PaddingRight(1)
+
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle
@@ -31,22 +38,23 @@ type ItemMetaData struct {
 	lineNum   int
 }
 
-func New(groupPattern string, collapsed bool) *Model {
+func New(
+	title string,
+	groupPattern string,
+	collapsed bool,
+) *Model {
 	itemList := GetLogEventsAsItemList(groupPattern)
 	itemList = formatList(itemList, false)
 
 	eventList := list.New(itemList, &ItemDelegate{}, 0, 0)
 	eventList.SetShowStatusBar(false)
 	eventList.SetFilteringEnabled(true)
-	eventList.Title = "Timestamp"
+	eventList.SetShowHelp(false)
+
+	eventList.Title = title
+	eventList.Styles.Title = titleStyle
 	eventList.Styles.PaginationStyle = paginationStyle
 	eventList.Styles.HelpStyle = helpStyle
-	eventList.Styles.Title = lipgloss.
-		NewStyle().
-		Background(lipgloss.Color("98")).
-		Foreground(lipgloss.Color("230")).
-		PaddingLeft(1).
-		PaddingRight(1)
 
 	metaData := make([]ItemMetaData, len(itemList))
 	for i := range metaData {
@@ -103,6 +111,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ItemMetaData[index].lineNum,
 			)
 			return m, cmd
+		case "c":
+			m.toggleCollapseAll()
+			cmd = commands.UpdateViewPort(
+				m.getItemListAsStringArray(),
+				m.ItemMetaData[index].lineNum,
+			)
+			return m, cmd
 		default:
 			m.List, cmd = m.List.Update(msg)
 			cmd = commands.UpdateViewPort(
@@ -147,4 +162,19 @@ func (m *Model) getItemListAsStringArray() []string {
 		m.ItemMetaData[index].lineNum = height
 	}
 	return list
+}
+
+func (m *Model) toggleCollapseAll() {
+	collapseItems := true
+
+	for k := range m.ItemMetaData {
+		if m.ItemMetaData[k].Collapsed {
+			collapseItems = false
+			break
+		}
+	}
+
+	for k := range m.ItemMetaData {
+		m.ItemMetaData[k].Collapsed = collapseItems
+	}
 }
