@@ -41,20 +41,19 @@ const (
 type Model struct {
 	eventsList     *event.Model
 	viewportEvents *vp.Model
-	logGroupList   group.Model
-	logStreamList  stream.Model
+	logGroupList   *group.Model
+	logStreamList  *stream.Model
 	help           help.Model
 	keyMaps        []help.KeyMap
 	selected       int
 }
 
-func InitialModel(ctx context.Context) *Model {
+func New(ctx context.Context) *Model {
 	helpModel := help.New()
 	helpModel.ShowAll = true
 	return &Model{
 		eventsList: event.New(
 			"Timestamps",
-			"/aws/lambda/dev-djaap-event-handlers-batch-processor",
 			false,
 		),
 		viewportEvents: vp.New(
@@ -67,7 +66,6 @@ func InitialModel(ctx context.Context) *Model {
 		),
 		logStreamList: stream.New(
 			"Log Streams",
-			"/aws/lambda/dev-djaap-event-handlers-batch-processor",
 		),
 		keyMaps: []help.KeyMap{
 			keys,
@@ -167,7 +165,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 		model tea.Model
 	)
 
-	height := msg.Height - lipgloss.Height(m.help.View(keys))
+	height := msg.Height - lipgloss.Height(m.help.View(keys)) - 2 // TODO add const for 2
 	width := msg.Width
 
 	borderMarginSize := 4 // subtract 4 for border
@@ -186,14 +184,14 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 		Width:  logGroupListWidth,
 		Height: logListHeight - borderMarginSize,
 	})
-	m.logGroupList = model.(group.Model)
+	m.logGroupList = model.(*group.Model)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.logStreamList.Update(tea.WindowSizeMsg{
 		Width:  logStreamListWidth,
 		Height: logListHeight - borderMarginSize,
 	})
-	m.logStreamList = model.(stream.Model)
+	m.logStreamList = model.(*stream.Model)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.eventsList.Update(tea.WindowSizeMsg{
@@ -220,10 +218,10 @@ func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.selected {
 	case groupListSelected:
 		model, cmd = m.logGroupList.Update(msg)
-		m.logGroupList = model.(group.Model)
+		m.logGroupList = model.(*group.Model)
 	case streamListSelected:
 		model, cmd = m.logStreamList.Update(msg)
-		m.logStreamList = model.(stream.Model)
+		m.logStreamList = model.(*stream.Model)
 	case eventListSelected:
 		model, cmd = m.eventsList.Update(msg)
 		m.eventsList = model.(*event.Model)
@@ -239,11 +237,11 @@ func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	model, cmd = m.logGroupList.Update(msg)
-	m.logGroupList = model.(group.Model)
+	m.logGroupList = model.(*group.Model)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.logStreamList.Update(msg)
-	m.logStreamList = model.(stream.Model)
+	m.logStreamList = model.(*stream.Model)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.eventsList.Update(msg)

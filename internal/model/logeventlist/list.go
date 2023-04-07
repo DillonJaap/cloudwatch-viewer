@@ -40,13 +40,10 @@ type ItemMetaData struct {
 
 func New(
 	title string,
-	groupPattern string,
 	collapsed bool,
 ) *Model {
-	itemList := GetLogEventsAsItemList(groupPattern)
-	itemList = formatList(itemList, false)
+	eventList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
 
-	eventList := list.New(itemList, &ItemDelegate{}, 0, 0)
 	eventList.SetShowStatusBar(false)
 	eventList.SetFilteringEnabled(true)
 	eventList.SetShowHelp(false)
@@ -56,30 +53,11 @@ func New(
 	eventList.Styles.PaginationStyle = paginationStyle
 	eventList.Styles.HelpStyle = helpStyle
 
-	metaData := make([]ItemMetaData, len(itemList))
-	for i := range metaData {
-		metaData[i].Collapsed = collapsed
-	}
-
 	return &Model{
 		List:         eventList,
 		Choice:       "",
-		ItemMetaData: metaData,
+		ItemMetaData: []ItemMetaData{},
 	}
-}
-
-func (m *Model) GetEventItems(groupPattern string, collapsed bool) tea.Cmd {
-	itemList := GetLogEventsAsItemList(groupPattern)
-	itemList = formatList(itemList, false)
-	cmd := m.List.SetItems(itemList)
-
-	metaData := make([]ItemMetaData, len(itemList))
-	for i := range metaData {
-		metaData[i].Collapsed = collapsed
-	}
-	m.ItemMetaData = metaData
-
-	return cmd
 }
 
 func (m *Model) Init() tea.Cmd {
@@ -120,15 +98,22 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		default:
 			m.List, cmd = m.List.Update(msg)
+
 			cmd = commands.UpdateViewPort(
 				m.getItemListAsStringArray(),
-				m.ItemMetaData[index].lineNum,
+				m.getLineNumber(),
 			)
 			cmds = append(cmds, cmd)
+
 			return m, tea.Batch(cmds...)
 		}
 	case commands.UpdateEventListItemsMsg:
-		m.GetEventItems(msg.Group, false)
+		cmd = m.UpdateEventItems(msg.Group, msg.Stream, false)
+		cmds = append(cmds, cmd)
+		cmd = commands.UpdateViewPort(
+			m.getItemListAsStringArray(),
+			m.getLineNumber(),
+		)
 		cmds = append(cmds, cmd)
 	}
 
@@ -140,6 +125,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) View() string {
 	return m.List.View()
+}
+
+func (m *Model) UpdateEventItems(
+	groupPattern string,
+	streamPrefix string,
+	collapsed bool,
+) tea.Cmd {
+	itemList := GetLogEventsAsItemList(groupPattern, streamPrefix)
+	itemList = formatList(itemList, false)
+	cmd := m.List.SetItems(itemList)
+
+	metaData := make([]ItemMetaData, len(itemList))
+	for i := range metaData {
+		metaData[i].Collapsed = collapsed
+	}
+	m.ItemMetaData = metaData
+
+	return cmd
 }
 
 func (m *Model) getItemListAsStringArray() []string {
@@ -177,4 +180,12 @@ func (m *Model) toggleCollapseAll() {
 	for k := range m.ItemMetaData {
 		m.ItemMetaData[k].Collapsed = collapseItems
 	}
+}
+
+func (m *Model) getLineNumber() int {
+	lineNum := 0
+	if len(m.ItemMetaData) > 0 {
+		lineNum = m.ItemMetaData[m.List.Index()].lineNum
+	}
+	return lineNum
 }

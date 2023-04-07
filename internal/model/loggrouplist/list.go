@@ -26,7 +26,7 @@ var (
 )
 
 // Log group model
-var _ tea.Model = Model{}
+var _ tea.Model = &Model{}
 
 type Model struct {
 	List   list.Model
@@ -36,7 +36,7 @@ type Model struct {
 func New(
 	title string,
 	name string,
-) Model {
+) *Model {
 	itemList := GetLogGroupsAsItemList(name)
 
 	groupList := list.New(itemList, &ItemDelegate{}, 0, 0)
@@ -46,17 +46,17 @@ func New(
 	groupList.Styles.PaginationStyle = paginationStyle
 	groupList.SetShowHelp(false)
 	groupList.Styles.Title = titleStyle
-	return Model{
+	return &Model{
 		List:   groupList,
 		Choice: "",
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
@@ -80,6 +80,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) View() string {
+func (m *Model) View() string {
 	return m.List.View()
 }

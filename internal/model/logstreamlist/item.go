@@ -17,24 +17,10 @@ type Item string
 
 func (i Item) FilterValue() string { return string(i) }
 
-func GetLogGroupsAsItemList(pattern string) []list.Item {
-	logGroups := cw.GetLogGroups(context.Background(), cloudwatchlogs.DescribeLogGroupsInput{
-		LogGroupNamePrefix: aws.String(pattern),
-	})
-
-	var groups []list.Item
-
-	for k := range logGroups {
-		name := aws.ToString(logGroups[k].LogGroupName)
-		groups = append(groups, Item(name))
-	}
-
-	return groups
-}
-
 func GetLogStreamsAsItemList(pattern string) []list.Item {
 	logStreams := cw.GetLogStreams(context.Background(), cloudwatchlogs.DescribeLogStreamsInput{
 		LogGroupName: aws.String(pattern),
+		Limit:        aws.Int32(30),
 	})
 
 	var streams []list.Item

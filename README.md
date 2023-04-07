@@ -1,5 +1,5 @@
 # TODO
-- [ ] fix viewport spacing
+- [x] fix viewport spacing
 - [ ] add log stream list
 - [ ] add cache for log stream and events
 - [ ] add search all log stream filtering
@@ -16,4 +16,12 @@
 - [x] add collapse/expand all
 - [ ] proper filtering for messages
 - [ ] add sane defaults
+- [x] fix empty list panic
+- [ ] fix collapse all behavior so that it collapses if any item is open
+- [ ] add sane defaults for sorting
+- [ ] add ability to sort
+- [ ] add loading status to ui
+- [ ] display the currently selected log group & stream in ui
 
+
+- [ ] clean up code & add comments

@@ -27,10 +27,11 @@ func UpdateViewPort(content []string, yOffset int) tea.Cmd {
 	}
 }
 
-func UpdateEventListItems(group string) tea.Cmd {
+func UpdateEventListItems(group string, stream string) tea.Cmd {
 	return func() tea.Msg {
 		return UpdateEventListItemsMsg{
-			Group: group,
+			Group:  group,
+			Stream: stream,
 		}
 	}
 }

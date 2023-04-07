@@ -57,10 +57,11 @@ func (i Item) getTruncatedDescription(maxLength int) string {
 	return msg
 }
 
-func GetLogEventsAsItemList(logGroupPattern string) []list.Item {
+func GetLogEventsAsItemList(logGroupPattern string, logStreamPrefix string) []list.Item {
 	logEvents := cw.GetEvents(
 		context.Background(),
 		logGroupPattern,
+		logStreamPrefix,
 	)
 
 	var events []list.Item

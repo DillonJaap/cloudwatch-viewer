@@ -26,17 +26,17 @@ var (
 )
 
 // Log Stream model
-var _ tea.Model = Model{}
+var _ tea.Model = &Model{}
 
 type Model struct {
-	List   list.Model
-	Choice string
+	List           list.Model
+	SelectedStream string
+	currentGroup   string
 }
 
 func New(
 	title string,
-	name string,
-) Model {
+) *Model {
 	streamList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
 
 	streamList.SetShowStatusBar(false)
@@ -47,17 +47,22 @@ func New(
 	streamList.Styles.Title = titleStyle
 	streamList.Styles.PaginationStyle = paginationStyle
 
-	return Model{
-		List:   streamList,
-		Choice: "",
+	return &Model{
+		List:           streamList,
+		SelectedStream: "",
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
@@ -70,20 +75,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			i, ok := m.List.SelectedItem().(Item)
 			if ok {
-				m.Choice = string(i)
+				m.SelectedStream = string(i)
 			}
 
-			return m, commands.UpdateStreamListItems(m.Choice)
+			return m, commands.UpdateEventListItems(m.currentGroup, m.SelectedStream)
 		}
 	case commands.UpdateStreamListItemsMsg:
-		return m, m.UpdateStreamItems(msg.Group)
+		m.currentGroup = msg.Group
+		cmd = m.UpdateStreamItems(m.currentGroup)
+		cmds = append(cmds, cmd)
 	}
-	var cmd tea.Cmd
+
 	m.List, cmd = m.List.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m *Model) View() string {
 	return m.List.View()
 }
 

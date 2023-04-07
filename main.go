@@ -19,7 +19,7 @@ func main() {
 	}
 	defer f.Close()
 	p := tea.NewProgram(
-		model.InitialModel(ctx),
+		model.New(ctx),
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)

@@ -10,7 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
-func GetEvents(ctx context.Context, logGropPattern string) []types.OutputLogEvent {
+func GetEvents(
+	ctx context.Context,
+	logGropPattern string,
+	logStreamPrefix string,
+) []types.OutputLogEvent {
 	// Load the Shared AWS Configuration(~/.aws/config)
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -31,9 +35,10 @@ func GetEvents(ctx context.Context, logGropPattern string) []types.OutputLogEven
 	// get log streams
 	logGroupName := logGroupsOutput.LogGroups[0].LogGroupName
 	logStreamsOutput, err := cwClient.DescribeLogStreams(ctx, &cloudwatchlogs.DescribeLogStreamsInput{
-		Limit:              aws.Int32(1),
-		LogGroupIdentifier: logGroupName,
-		Descending:         aws.Bool(true),
+		Limit:               aws.Int32(1),
+		LogGroupIdentifier:  logGroupName,
+		LogStreamNamePrefix: aws.String(logStreamPrefix),
+		Descending:          aws.Bool(true),
 	})
 	if err != nil {
 		log.Fatal(err)
