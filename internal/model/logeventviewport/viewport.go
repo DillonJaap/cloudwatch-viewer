@@ -25,7 +25,7 @@ var (
 		b.Right = "├"
 		return lipgloss.
 			NewStyle().
-			Background(lipgloss.Color("62")).
+			Background(lipgloss.Color("98")).
 			Foreground(lipgloss.Color("230")).
 			PaddingLeft(1).
 			PaddingRight(1)
@@ -35,7 +35,7 @@ var (
 		return titleStyle.Copy()
 	}()
 
-	lineStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("62"))
+	lineStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("98"))
 	viewPortStyle = lipgloss.NewStyle().
 			Padding(2).
 			BorderStyle(lipgloss.NormalBorder()).
@@ -131,9 +131,7 @@ func (m Model) headerView() string {
 
 func (m Model) footerView() string {
 	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.Viewport.ScrollPercent()*100))
-	line := lineStyle.Render(
-		strings.Repeat("─", max(0, m.Viewport.Width-lipgloss.Width(info))),
-	)
+	line := lineStyle.Render(strings.Repeat("─", max(0, m.Viewport.Width-lipgloss.Width(info))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
 

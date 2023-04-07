@@ -21,6 +21,10 @@ var (
 	selectedModelStyle = lipgloss.NewStyle().
 				BorderStyle(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("69"))
+
+	tuiBorder = lipgloss.NewStyle().
+			BorderStyle(lipgloss.DoubleBorder()).
+			BorderForeground(lipgloss.Color("08"))
 )
 
 const (
@@ -82,10 +86,12 @@ func (m *Model) View() string {
 		logEventView,
 	)
 
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		logGroupAndEvents,
-		helpView,
+	return tuiBorder.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			logGroupAndEvents,
+			helpView,
+		),
 	)
 }
 

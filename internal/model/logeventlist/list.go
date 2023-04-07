@@ -41,6 +41,12 @@ func New(groupPattern string, collapsed bool) *Model {
 	eventList.Title = "Timestamp"
 	eventList.Styles.PaginationStyle = paginationStyle
 	eventList.Styles.HelpStyle = helpStyle
+	eventList.Styles.Title = lipgloss.
+		NewStyle().
+		Background(lipgloss.Color("98")).
+		Foreground(lipgloss.Color("230")).
+		PaddingLeft(1).
+		PaddingRight(1)
 
 	metaData := make([]ItemMetaData, len(itemList))
 	for i := range metaData {

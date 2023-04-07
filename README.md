@@ -10,3 +10,4 @@
 * create unified help menu
 * do the Update() methods have to return tea.Model, or can they return their own model?
 * can see event messages as soon as tui loads
+* add styles module

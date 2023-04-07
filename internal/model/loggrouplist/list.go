@@ -35,6 +35,12 @@ func New() Model {
 	groupList.Title = "Log Groups"
 	groupList.Styles.PaginationStyle = paginationStyle
 	groupList.SetShowHelp(false)
+	groupList.Styles.Title = lipgloss.
+		NewStyle().
+		Background(lipgloss.Color("98")).
+		Foreground(lipgloss.Color("230")).
+		PaddingLeft(1).
+		PaddingRight(1)
 
 	return Model{
 		List:   groupList,
