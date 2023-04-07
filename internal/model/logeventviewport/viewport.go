@@ -35,11 +35,7 @@ var (
 		return titleStyle.Copy()
 	}()
 
-	lineStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("98"))
-	viewPortStyle = lipgloss.NewStyle().
-			Padding(2).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("69")).BorderLeft(true)
+	lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("98"))
 )
 
 var _ tea.Model = &Model{}
@@ -52,11 +48,9 @@ type Model struct {
 
 func New(events string) *Model {
 	return &Model{
-		Events: events,
-		Ready:  false,
-		Viewport: viewport.Model{
-			Style: viewPortStyle,
-		},
+		Events:   events,
+		Ready:    false,
+		Viewport: viewport.Model{},
 	}
 }
 
@@ -93,7 +87,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, viewport.Sync(m.Viewport))
 		}
 	case commands.UpdateViewPortContentMsg:
-		m.Viewport.SetContent(msg.Content)
+		m.Viewport.SetContent(m.FormatList(msg.Content))
 		// Center selected item in the viewport
 		m.Viewport.SetYOffset(max(0, msg.YOffset-(m.Viewport.Height/2)))
 		return m, nil
@@ -104,6 +98,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) FormatList(list []string) string {
+	var str string
+	for i, msg := range list {
+		if i%2 == 1 {
+			str += lipgloss.NewStyle().
+				Background(lipgloss.Color("233")).
+				PaddingRight(m.Viewport.Width-lipgloss.Width(msg)).
+				PaddingLeft(2).
+				Render(msg) + "\n"
+		} else {
+			str += lipgloss.NewStyle().
+				PaddingLeft(2).
+				Render(msg) + "\n"
+		}
+	}
+	return str
 }
 
 func (m *Model) View() string {

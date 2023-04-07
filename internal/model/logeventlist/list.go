@@ -99,14 +99,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.ItemMetaData[index].Collapsed = !m.ItemMetaData[index].Collapsed
 			cmd = commands.UpdateViewPort(
-				m.getItemListAsString(),
+				m.getItemListAsStringArray(),
 				m.ItemMetaData[index].lineNum,
 			)
 			return m, cmd
 		default:
 			m.List, cmd = m.List.Update(msg)
 			cmd = commands.UpdateViewPort(
-				m.getItemListAsString(),
+				m.getItemListAsStringArray(),
 				m.ItemMetaData[index].lineNum,
 			)
 			cmds = append(cmds, cmd)
@@ -127,8 +127,9 @@ func (m *Model) View() string {
 	return m.List.View()
 }
 
-func (m *Model) getItemListAsString() string {
-	var list string
+func (m *Model) getItemListAsStringArray() []string {
+	var list []string
+	height := 0
 
 	for index, item := range m.List.Items() {
 		formattedItem := FormatMessage(
@@ -137,14 +138,13 @@ func (m *Model) getItemListAsString() string {
 		)
 
 		if m.List.Index() == index {
-			list += selectedItemStyleViewPort.Render(formattedItem) + "\n"
+			list = append(list, selectedItemStyleViewPort.Render(formattedItem))
 		} else {
-			list += formattedItem + "\n"
+			list = append(list, formattedItem)
 		}
 
-		// TODO could optimize this by keeping track of the current list height,
-		// instead of recalculating it everytime
-		m.ItemMetaData[index].lineNum = lipgloss.Height(list)
+		height += lipgloss.Height(formattedItem)
+		m.ItemMetaData[index].lineNum = height
 	}
 	return list
 }
