@@ -33,6 +33,9 @@ func GetLogGroupsAsItemList(pattern string) []list.Item {
 }
 
 func (i Item) getTruncatedDescription(maxLength int) string {
+	if maxLength < 10 {
+		maxLength = 10
+	}
 	if len(i) > maxLength {
 		return string(i[0:maxLength-3] + "...")
 	}

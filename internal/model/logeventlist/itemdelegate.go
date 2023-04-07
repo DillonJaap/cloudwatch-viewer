@@ -24,7 +24,7 @@ func (i *ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 
 	item, ok := listItem.(Item)
 	if ok {
-		str = fmt.Sprintf("%s", item.getTruncatedDescription(m.Width()-10))
+		str = fmt.Sprintf("%s", item.getTruncatedTimeStamp(m.Width()-10))
 	} else {
 		str = fmt.Sprintf("%s", listItem.FilterValue())
 	}

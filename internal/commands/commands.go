@@ -6,16 +6,18 @@ import (
 
 type UpdateViewPortContentMsg struct {
 	Content string
+	YOffset int
 }
 
 type UpdateEventListItemsMsg struct {
 	Group string
 }
 
-func UpdateViewPort(content string) tea.Cmd {
+func UpdateViewPort(content string, yOffset int) tea.Cmd {
 	return func() tea.Msg {
 		return UpdateViewPortContentMsg{
 			Content: content,
+			YOffset: yOffset,
 		}
 	}
 }

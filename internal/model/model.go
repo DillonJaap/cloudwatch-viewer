@@ -26,11 +26,10 @@ var (
 const (
 	groupListSelected = 0
 	eventListSelected = 1
-	viewportSelected  = 2
 )
 
 type Model struct {
-	eventsList     event.Model
+	eventsList     *event.Model
 	viewportEvents *vp.Model
 	logGroupList   group.Model
 	keys           keyMap
@@ -40,7 +39,10 @@ type Model struct {
 
 func InitialModel(ctx context.Context) *Model {
 	return &Model{
-		eventsList:     event.New(),
+		eventsList: event.New(
+			"/aws/lambda/dev-djaap-event-handlers-batch-processor",
+			false,
+		),
 		viewportEvents: vp.New("..."),
 		logGroupList:   group.New(),
 		keys:           keys,
@@ -54,45 +56,35 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) View() string {
-	var (
-		logGroupList       string
-		eventList          string
-		logMessageViewPort string
-	)
+	var logGroupList string
 
 	helpView := m.help.View(m.keys)
+
+	logEventView := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.eventsList.View(),
+		m.viewportEvents.View(),
+	)
 
 	// TODO clean this up
 	switch m.selected {
 	case groupListSelected:
+		logEventView = modelStyle.Render(logEventView)
 		logGroupList = selectedModelStyle.Render(m.logGroupList.View())
-		eventList = modelStyle.Render(m.eventsList.View())
-		logMessageViewPort = modelStyle.Render(m.viewportEvents.View())
 	case eventListSelected:
-		eventList = selectedModelStyle.Render(m.eventsList.View())
-		logGroupList = modelStyle.Render(m.logGroupList.View())
-		logMessageViewPort = modelStyle.Render(m.viewportEvents.View())
-	case viewportSelected:
-		logMessageViewPort = selectedModelStyle.Render(m.viewportEvents.View())
-		eventList = modelStyle.Render(m.eventsList.View())
+		logEventView = selectedModelStyle.Render(logEventView)
 		logGroupList = modelStyle.Render(m.logGroupList.View())
 	}
 
 	logGroupAndEvents := lipgloss.JoinVertical(
 		lipgloss.Left,
 		logGroupList,
-		eventList,
-	)
-
-	logView := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		logGroupAndEvents,
-		logMessageViewPort,
+		logEventView,
 	)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		logView,
+		logGroupAndEvents,
 		helpView,
 	)
 }
@@ -105,7 +97,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "tab":
-			m.selected = (m.selected + 1) % 3
+			m.selected = (m.selected + 1) % 2
 			return m, nil
 		default:
 			return m.updateKeyMsg(msg)
@@ -131,15 +123,15 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 
 	borderMarginSize := 4 // subtract 4 for border
 
-	leftHandWidth := int(float32(width / 3))
+	leftHandWidth := int(float32(width) / 3.0)
 	rightHandWidth := width - leftHandWidth
 
-	logGroupListHeight := int(float32(height) / 4)
+	logGroupListHeight := int(float32(height) / 4.0)
 	logEventListHeight := height - logGroupListHeight
-	eventViewPortHeight := height
+	eventViewPortHeight := height - logGroupListHeight
 
 	model, cmd = m.logGroupList.Update(tea.WindowSizeMsg{
-		Width:  leftHandWidth - borderMarginSize,
+		Width:  width,
 		Height: logGroupListHeight - borderMarginSize,
 	})
 	m.logGroupList = model.(group.Model)
@@ -149,7 +141,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 		Width:  leftHandWidth - borderMarginSize,
 		Height: logEventListHeight - borderMarginSize,
 	})
-	m.eventsList = model.(event.Model)
+	m.eventsList = model.(*event.Model)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.viewportEvents.Update(tea.WindowSizeMsg{
@@ -172,10 +164,7 @@ func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logGroupList = model.(group.Model)
 	case eventListSelected:
 		model, cmd = m.eventsList.Update(msg)
-		m.eventsList = model.(event.Model)
-	case viewportSelected:
-		model, cmd = m.viewportEvents.Update(msg)
-		m.viewportEvents = model.(*vp.Model)
+		m.eventsList = model.(*event.Model)
 	}
 	return m, cmd
 }
@@ -192,7 +181,7 @@ func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.eventsList.Update(msg)
-	m.eventsList = model.(event.Model)
+	m.eventsList = model.(*event.Model)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.viewportEvents.Update(msg)

@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -29,7 +30,25 @@ func (i Item) Title() string       { return i.TimeStamp }
 func (i Item) Description() string { return "" }
 func (i Item) FilterValue() string { return i.Message }
 
+// TODO combine these two functions
+func (i Item) getTruncatedTimeStamp(maxLength int) string {
+	if maxLength < 10 {
+		maxLength = 10
+	}
+
+	// TODO add error handling
+	timeInt, _ := strconv.ParseInt(i.TimeStamp, 10, 64)
+	time := time.Unix(timeInt, 0).String()
+	if len(time) > maxLength {
+		return time[0:maxLength-3] + "..."
+	}
+	return time
+}
+
 func (i Item) getTruncatedDescription(maxLength int) string {
+	if maxLength < 10 {
+		maxLength = 10
+	}
 	msg := strings.ReplaceAll(i.Message, "\t", " ")
 	msg = strings.ReplaceAll(msg, "\n", " ")
 	if len(msg) > maxLength {
@@ -84,17 +103,12 @@ func formatList(itemList []list.Item, formatAsJson bool) []list.Item {
 
 func FormatMessage(in string, formatAsJson bool) string {
 	in = strings.ReplaceAll(in, "\t", " ")
+	in = strings.ReplaceAll(in, "\n", " ")
 
-	regx, _ := regexp.Compile(`(.*)(?P<json>{.*})(.*)`)
-	submatches := regx.FindStringSubmatch(in)
-
-	if len(submatches) == 0 || !formatAsJson {
-		return in
+	if in[0] == '{' && formatAsJson {
+		return formatJson(in)
 	}
-
-	return submatches[1] +
-		"\n" + formatJson(submatches[2]) +
-		"\n" + submatches[3]
+	return in
 }
 
 func formatJson(in string) string {
