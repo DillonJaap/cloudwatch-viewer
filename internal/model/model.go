@@ -39,7 +39,7 @@ const (
 )
 
 type Model struct {
-	eventsList     *event.Model
+	eventsList     event.Model
 	viewportEvents *vp.Model
 	logGroupList   *group.Model
 	logStreamList  *stream.Model
@@ -77,11 +77,11 @@ func New(ctx context.Context) *Model {
 	}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) View() string {
+func (m Model) View() string {
 	var logGroupList string
 	var logStreamList string
 
@@ -130,7 +130,7 @@ func (m *Model) View() string {
 	)
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -158,7 +158,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m.updateSubModules(msg)
 }
 
-func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
+func (m Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	var (
 		cmd   tea.Cmd
 		cmds  []tea.Cmd
@@ -194,11 +194,10 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	m.logStreamList = model.(*stream.Model)
 	cmds = append(cmds, cmd)
 
-	model, cmd = m.eventsList.Update(tea.WindowSizeMsg{
+	m.eventsList, cmd = m.eventsList.Update(tea.WindowSizeMsg{
 		Width:  eventsLeftHandWidth - borderMarginSize,
 		Height: logEventListHeight - borderMarginSize,
 	})
-	m.eventsList = model.(*event.Model)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.viewportEvents.Update(tea.WindowSizeMsg{
@@ -211,7 +210,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd = nil
 	var model tea.Model
 
@@ -223,13 +222,12 @@ func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 		model, cmd = m.logStreamList.Update(msg)
 		m.logStreamList = model.(*stream.Model)
 	case eventListSelected:
-		model, cmd = m.eventsList.Update(msg)
-		m.eventsList = model.(*event.Model)
+		m.eventsList, cmd = m.eventsList.Update(msg)
 	}
 	return m, cmd
 }
 
-func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd   tea.Cmd
 		cmds  []tea.Cmd
@@ -244,8 +242,7 @@ func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.logStreamList = model.(*stream.Model)
 	cmds = append(cmds, cmd)
 
-	model, cmd = m.eventsList.Update(msg)
-	m.eventsList = model.(*event.Model)
+	m.eventsList, cmd = m.eventsList.Update(msg)
 	cmds = append(cmds, cmd)
 
 	model, cmd = m.viewportEvents.Update(msg)

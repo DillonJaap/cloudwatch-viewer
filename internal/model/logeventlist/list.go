@@ -25,8 +25,6 @@ var (
 	selectedItemStyleViewPort = lipgloss.NewStyle().Foreground(lipgloss.Color("127"))
 )
 
-var _ tea.Model = &Model{}
-
 type Model struct {
 	List         list.Model
 	Choice       string
@@ -41,7 +39,7 @@ type ItemMetaData struct {
 func New(
 	title string,
 	collapsed bool,
-) *Model {
+) Model {
 	eventList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
 
 	eventList.SetShowStatusBar(false)
@@ -53,23 +51,20 @@ func New(
 	eventList.Styles.PaginationStyle = paginationStyle
 	eventList.Styles.HelpStyle = helpStyle
 
-	return &Model{
+	return Model{
 		List:         eventList,
 		Choice:       "",
 		ItemMetaData: []ItemMetaData{},
 	}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
-	index := m.List.Index()
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -77,43 +72,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.List.SetHeight(msg.Height)
 		return m, nil
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "enter":
-			item, ok := m.List.SelectedItem().(Item)
-			if ok {
-				m.Choice = item.Message
-			}
-			m.ItemMetaData[index].Collapsed = !m.ItemMetaData[index].Collapsed
-			cmd = commands.UpdateViewPort(
-				m.getItemListAsStringArray(),
-				m.ItemMetaData[index].lineNum,
-			)
-			return m, cmd
-		case "c":
-			m.toggleCollapseAll()
-			cmd = commands.UpdateViewPort(
-				m.getItemListAsStringArray(),
-				m.ItemMetaData[index].lineNum,
-			)
-			return m, cmd
-		default:
-			m.List, cmd = m.List.Update(msg)
-
-			cmd = commands.UpdateViewPort(
-				m.getItemListAsStringArray(),
-				m.getLineNumber(),
-			)
-			cmds = append(cmds, cmd)
-
-			return m, tea.Batch(cmds...)
-		}
+		return m.updateKeyMsg(msg)
 	case commands.UpdateEventListItemsMsg:
-		cmd = m.UpdateEventItems(msg.Group, msg.Stream, false)
-		cmds = append(cmds, cmd)
-		cmd = commands.UpdateViewPort(
-			m.getItemListAsStringArray(),
-			m.getLineNumber(),
-		)
+		m, cmd = m.updateEventListItems(msg.Group, msg.Stream, false)
 		cmds = append(cmds, cmd)
 	}
 
@@ -123,26 +84,90 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) View() string {
+func (m Model) View() string {
 	return m.List.View()
 }
 
-func (m *Model) UpdateEventItems(
+// updateEventListItems updates the event lists with new messages from the new
+// group/stream and refreshes the viewport
+func (m Model) updateEventListItems(
 	groupPattern string,
 	streamPrefix string,
 	collapsed bool,
-) tea.Cmd {
+) (Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+	// reset list
+	m.Choice = ""
+
+	// update item list
 	itemList := GetLogEventsAsItemList(groupPattern, streamPrefix)
 	itemList = formatList(itemList, false)
-	cmd := m.List.SetItems(itemList)
+	cmd = m.List.SetItems(itemList)
+	cmds = append(cmds, cmd)
 
+	// update item meta data
 	metaData := make([]ItemMetaData, len(itemList))
 	for i := range metaData {
 		metaData[i].Collapsed = collapsed
 	}
 	m.ItemMetaData = metaData
 
-	return cmd
+	// update viewport
+	cmd = commands.UpdateViewPort(
+		m.getItemListAsStringArray(),
+		m.getLineNumber(),
+	)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+// updateKeyMsg updates model based on the tea.KeyMsg
+func (m Model) updateKeyMsg(msg tea.KeyMsg) (Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+	index := m.List.Index()
+	switch keypress := msg.String(); keypress {
+	// Toggle Collapse on Item
+	case "enter":
+		item, ok := m.List.SelectedItem().(Item)
+		if ok {
+			m.Choice = item.Message
+		}
+		m.ItemMetaData[index].Collapsed = !m.ItemMetaData[index].Collapsed
+		cmd = commands.UpdateViewPort(
+			m.getItemListAsStringArray(),
+			m.ItemMetaData[index].lineNum,
+		)
+		return m, cmd
+	// Toggle Collapse all
+	case "c":
+		m.toggleCollapseAll()
+		cmd = commands.UpdateViewPort(
+			m.getItemListAsStringArray(),
+			m.ItemMetaData[index].lineNum,
+		)
+		return m, cmd
+	// all other keystrokes get handled by the list Model
+	// and then the viewport gets updated
+	default:
+		m.List, cmd = m.List.Update(msg)
+		cmds = append(cmds, cmd)
+
+		cmd = commands.UpdateViewPort(
+			m.getItemListAsStringArray(),
+			m.getLineNumber(),
+		)
+		cmds = append(cmds, cmd)
+
+		return m, tea.Batch(cmds...)
+	}
+
 }
 
 func (m *Model) getItemListAsStringArray() []string {
@@ -182,9 +207,9 @@ func (m *Model) toggleCollapseAll() {
 	}
 }
 
-func (m *Model) getLineNumber() int {
+func (m Model) getLineNumber() int {
 	lineNum := 0
-	if len(m.ItemMetaData) > 0 {
+	if len(m.ItemMetaData) > m.List.Index()+1 {
 		lineNum = m.ItemMetaData[m.List.Index()].lineNum
 	}
 	return lineNum

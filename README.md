@@ -15,13 +15,15 @@
 - [ ] add refresh button
 - [x] add collapse/expand all
 - [ ] proper filtering for messages
-- [ ] add sane defaults
+- [ ] add sane defaults for log group / stream values
 - [x] fix empty list panic
 - [ ] fix collapse all behavior so that it collapses if any item is open
 - [ ] add sane defaults for sorting
-- [ ] add ability to sort
+- [ ] add ability to chose sorting method
 - [ ] add loading status to ui
 - [ ] display the currently selected log group & stream in ui
+- [ ] improve updateViewPort logic
+- [ ] reset list cursor when new data loads
 
 
 - [ ] clean up code & add comments

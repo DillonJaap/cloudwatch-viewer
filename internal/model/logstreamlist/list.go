@@ -50,6 +50,7 @@ func New(
 	return &Model{
 		List:           streamList,
 		SelectedStream: "",
+		currentGroup:   "",
 	}
 }
 
@@ -97,6 +98,9 @@ func (m *Model) View() string {
 }
 
 func (m *Model) UpdateStreamItems(groupPattern string) tea.Cmd {
+	// reset list
+	m.SelectedStream = ""
+	m.List.FilterInput.SetCursor(0)
 	itemList := GetLogStreamsAsItemList(groupPattern)
 	return m.List.SetItems(itemList)
 }
