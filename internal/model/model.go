@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math"
 
@@ -48,10 +49,10 @@ type Model struct {
 	selected       int
 }
 
-func New(ctx context.Context) Model {
+func New(ctx context.Context) *Model {
 	helpModel := help.New()
 	helpModel.ShowAll = true
-	return Model{
+	return &Model{
 		eventsList: event.New(
 			"Timestamps",
 			false,
@@ -77,20 +78,28 @@ func New(ctx context.Context) Model {
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) View() string {
+func (m *Model) View() string {
 	var logGroupList string
 	var logStreamList string
 
 	helpView := m.help.View(m.keyMaps[m.selected])
 
-	logEventView := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		m.eventsList.View(),
-		m.viewportEvents.View(),
+	logEventView := lipgloss.JoinVertical(
+		lipgloss.Left,
+		fmt.Sprintf(
+			"LogGroup: %s | LogStream: %s\n",
+			m.logGroupList.SelectedGroup,
+			m.logStreamList.SelectedStream,
+		),
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.eventsList.View(),
+			m.viewportEvents.View(),
+		),
 	)
 
 	// TODO clean this up
@@ -130,7 +139,7 @@ func (m Model) View() string {
 	)
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -158,7 +167,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m.updateSubModules(msg)
 }
 
-func (m Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
+func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -168,8 +177,8 @@ func (m Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	borderMarginSize := 4 // subtract 4 for border
 
 	logListHeight := int(float32(height) / 4.0)
-	logEventListHeight := height - logListHeight
-	eventViewPortHeight := height - logListHeight
+	logEventListHeight := height - logListHeight - 1  // TODO add const
+	eventViewPortHeight := height - logListHeight - 1 // TODO add const
 
 	logGroupListWidth := int(float32(width) / 2.0)
 	logStreamListWidth := width - logGroupListWidth
@@ -204,7 +213,7 @@ func (m Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd = nil
 
 	switch m.selected {
@@ -218,7 +227,7 @@ func (m Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 

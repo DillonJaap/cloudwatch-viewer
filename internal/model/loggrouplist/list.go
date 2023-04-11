@@ -26,8 +26,8 @@ var (
 )
 
 type Model struct {
-	List   list.Model
-	Choice string
+	List          list.Model
+	SelectedGroup string
 }
 
 func New(
@@ -47,8 +47,8 @@ func New(
 	groupList.Styles.PaginationStyle = paginationStyle
 
 	return Model{
-		List:   groupList,
-		Choice: "",
+		List:          groupList,
+		SelectedGroup: "",
 	}
 }
 
@@ -69,10 +69,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "enter":
 			i, ok := m.List.SelectedItem().(Item)
 			if ok {
-				m.Choice = string(i)
+				m.SelectedGroup = string(i)
 			}
 
-			return m, commands.UpdateStreamListItems(m.Choice)
+			return m, commands.UpdateStreamListItems(m.SelectedGroup)
 		}
 	}
 	var cmd tea.Cmd
