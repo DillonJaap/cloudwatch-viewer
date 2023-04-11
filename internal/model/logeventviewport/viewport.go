@@ -14,12 +14,6 @@ import (
 const useHighPerformanceRenderer = false
 
 var (
-	/*s.Title = lipgloss.NewStyle().
-	Background(lipgloss.Color("62")).
-	Foreground(lipgloss.Color("230")).
-	Padding(0, 1)
-	*/
-
 	titleStyle = func() lipgloss.Style {
 		b := lipgloss.RoundedBorder()
 		b.Right = "├"
@@ -38,8 +32,6 @@ var (
 	lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("98"))
 )
 
-var _ tea.Model = &Model{}
-
 type Model struct {
 	Title    string
 	Events   string
@@ -47,8 +39,8 @@ type Model struct {
 	Viewport viewport.Model
 }
 
-func New(title string, events string) *Model {
-	return &Model{
+func New(title string, events string) Model {
+	return Model{
 		Title:    title,
 		Events:   events,
 		Ready:    false,
@@ -56,11 +48,11 @@ func New(title string, events string) *Model {
 	}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -102,7 +94,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) FormatList(list []string) string {
+func (m Model) FormatList(list []string) string {
 	var str string
 	for _, msg := range list {
 		str += msg + "\n"
@@ -112,7 +104,7 @@ func (m *Model) FormatList(list []string) string {
 		Render(str)
 }
 
-func (m *Model) View() string {
+func (m Model) View() string {
 	if !m.Ready {
 		return "\n  Initializing..."
 	}

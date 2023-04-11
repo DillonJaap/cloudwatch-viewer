@@ -25,9 +25,6 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
-// Log Stream model
-var _ tea.Model = &Model{}
-
 type Model struct {
 	List           list.Model
 	SelectedStream string
@@ -36,7 +33,7 @@ type Model struct {
 
 func New(
 	title string,
-) *Model {
+) Model {
 	streamList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
 
 	streamList.SetShowStatusBar(false)
@@ -47,18 +44,18 @@ func New(
 	streamList.Styles.Title = titleStyle
 	streamList.Styles.PaginationStyle = paginationStyle
 
-	return &Model{
+	return Model{
 		List:           streamList,
 		SelectedStream: "",
 		currentGroup:   "",
 	}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -93,11 +90,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) View() string {
+func (m Model) View() string {
 	return m.List.View()
 }
 
-func (m *Model) UpdateStreamItems(groupPattern string) tea.Cmd {
+func (m Model) UpdateStreamItems(groupPattern string) tea.Cmd {
 	// reset list
 	m.SelectedStream = ""
 	m.List.FilterInput.SetCursor(0)

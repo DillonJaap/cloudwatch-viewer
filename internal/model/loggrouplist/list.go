@@ -25,9 +25,6 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
-// Log group model
-var _ tea.Model = &Model{}
-
 type Model struct {
 	List   list.Model
 	Choice string
@@ -36,27 +33,30 @@ type Model struct {
 func New(
 	title string,
 	name string,
-) *Model {
+) Model {
 	itemList := GetLogGroupsAsItemList(name)
 
 	groupList := list.New(itemList, &ItemDelegate{}, 0, 0)
+
 	groupList.SetShowStatusBar(false)
 	groupList.SetFilteringEnabled(true)
-	groupList.Title = title
-	groupList.Styles.PaginationStyle = paginationStyle
 	groupList.SetShowHelp(false)
+
+	groupList.Title = title
 	groupList.Styles.Title = titleStyle
-	return &Model{
+	groupList.Styles.PaginationStyle = paginationStyle
+
+	return Model{
 		List:   groupList,
 		Choice: "",
 	}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
@@ -80,6 +80,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *Model) View() string {
+func (m Model) View() string {
 	return m.List.View()
 }
