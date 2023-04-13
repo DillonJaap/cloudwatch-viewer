@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/charmbracelet/bubbles/list"
 
 	cw "clviewer/internal/cloudwatch"
@@ -21,6 +22,8 @@ func GetLogStreamsAsItemList(pattern string) []list.Item {
 	logStreams := cw.GetLogStreams(context.Background(), cloudwatchlogs.DescribeLogStreamsInput{
 		LogGroupName: aws.String(pattern),
 		Limit:        aws.Int32(30),
+		OrderBy:      types.OrderByLastEventTime,
+		Descending:   aws.Bool(true),
 	})
 
 	var streams []list.Item

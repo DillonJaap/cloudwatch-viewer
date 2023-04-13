@@ -1,6 +1,8 @@
 package logstreamlist
 
 import (
+	"log"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -29,6 +31,7 @@ type Model struct {
 	List           list.Model
 	SelectedStream string
 	currentGroup   string
+	padding        int
 }
 
 func New(
@@ -65,6 +68,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
 		m.List.SetHeight(msg.Height)
+
+		log.Printf("%+v\n", m.padding)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -91,10 +96,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.List.View()
+	return lipgloss.NewStyle().
+		PaddingRight(m.List.Width() - lipgloss.Width(m.List.View())).
+		Render(m.List.View())
 }
 
-func (m Model) UpdateStreamItems(groupPattern string) tea.Cmd {
+func (m *Model) UpdateStreamItems(groupPattern string) tea.Cmd {
 	// reset list
 	m.SelectedStream = ""
 	m.List.FilterInput.SetCursor(0)

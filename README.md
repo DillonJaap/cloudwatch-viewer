@@ -2,28 +2,32 @@
 - [x] fix viewport spacing
 - [ ] add log stream list
 - [ ] add cache for log stream and events
-- [ ] add search all log stream filtering
+- [ ] add search all log streams filtering
 - [ ] add saved searches
 - [ ] paginate log events & streams
 - [ ] fix filter spacing
 - [x] fix json formatting
 - [ ] create unified help menu
-- [ ] do the Update() methods have to return tea.Model, or can they return their own model?
-- [ ] can see event messages as soon as tui loads
+- [x] do the Update() methods have to return tea.Model, or can they return their own model?
+- [x] can see event messages as soon as tui loads
 - [ ] add styles module
-- [ ] refactor getItemListAsString() so that it is a array of strings, and so it only needs to be called once
+- [ ] refactor getItemListAsString() so that it is an array of strings, and so it only needs to be called once
 - [ ] add refresh button
 - [x] add collapse/expand all
-- [ ] proper filtering for messages
 - [ ] add sane defaults for log group / stream values
 - [x] fix empty list panic
 - [ ] fix collapse all behavior so that it collapses if any item is open
 - [ ] add sane defaults for sorting
 - [ ] add ability to chose sorting method
 - [ ] add loading status to ui
-- [ ] display the currently selected log group & stream in ui
+- [x] display the currently selected log group & stream in ui
 - [ ] improve updateViewPort logic
 - [ ] reset list cursor when new data loads
-
+- [ ] custom keybindings
+- [ ] refactor code - group related models - use more composition - simplify spacing between views 
+- [ ] proper filtering for messages / add search for messages viewport
+- [ ] viewport scroll (vertical and horizontal)
+- [ ] viewport copy message keybind
+- [ ] add last event time to logstream list (change list into table?)
 
 - [ ] clean up code & add comments

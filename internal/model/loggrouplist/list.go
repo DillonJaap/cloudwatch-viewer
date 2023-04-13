@@ -28,6 +28,7 @@ var (
 type Model struct {
 	List          list.Model
 	SelectedGroup string
+	padding       int
 }
 
 func New(
@@ -81,5 +82,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.List.View()
+	return lipgloss.NewStyle().
+		PaddingRight(m.List.Width() - lipgloss.Width(m.List.View())).
+		Render(m.List.View())
 }

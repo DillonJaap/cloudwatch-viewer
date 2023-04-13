@@ -1,4 +1,4 @@
-package logeventlist
+package timestamp
 
 import (
 	"context"

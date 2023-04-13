@@ -2,8 +2,6 @@ package model
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"math"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -12,8 +10,9 @@ import (
 
 	"clviewer/internal/commands"
 	"clviewer/internal/keymap"
-	event "clviewer/internal/model/logeventlist"
-	vp "clviewer/internal/model/logeventviewport"
+	event "clviewer/internal/model/logevent"
+	"clviewer/internal/model/logevent/message"
+	"clviewer/internal/model/logevent/timestamp"
 	group "clviewer/internal/model/loggrouplist"
 	stream "clviewer/internal/model/logstreamlist"
 )
@@ -30,6 +29,17 @@ var (
 	tuiBorder = lipgloss.NewStyle().
 			BorderStyle(lipgloss.DoubleBorder()).
 			BorderForeground(lipgloss.Color("08"))
+
+	doubleBorder = lipgloss.NewStyle().
+			BorderStyle(lipgloss.DoubleBorder()).
+			BorderForeground(lipgloss.Color("08")).
+			MarginLeft(1)
+
+	bold = lipgloss.NewStyle().
+		Bold(true)
+
+	purpleText = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("98"))
 )
 
 const (
@@ -40,32 +50,33 @@ const (
 )
 
 type Model struct {
-	eventsList     event.Model
-	viewportEvents vp.Model
-	logGroupList   group.Model
-	logStreamList  stream.Model
-	help           help.Model
-	keyMaps        []help.KeyMap
-	selected       int
+	logEvent  event.Model
+	logGroup  group.Model
+	logStream stream.Model
+	help      help.Model
+	keyMaps   []help.KeyMap
+	selected  int
 }
 
 func New(ctx context.Context) *Model {
 	helpModel := help.New()
 	helpModel.ShowAll = true
 	return &Model{
-		eventsList: event.New(
-			"Timestamps",
-			false,
-		),
-		viewportEvents: vp.New(
-			"Log Messages",
-			"...",
-		),
-		logGroupList: group.New(
+		logEvent: event.Model{
+			Timestamp: timestamp.New(
+				"Timestamps",
+				false,
+			),
+			Messages: message.New(
+				"Log Messages",
+				"...",
+			),
+		},
+		logGroup: group.New(
 			"Log Groups",
-			"/aws/lambda",
+			"/aws/lambda/dev-djaap",
 		),
-		logStreamList: stream.New(
+		logStream: stream.New(
 			"Log Streams",
 		),
 		keyMaps: []help.KeyMap{
@@ -83,48 +94,34 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) View() string {
-	var logGroupList string
-	var logStreamList string
+	logGroupList := m.logGroup.View()
+	logStreamList := m.logStream.View()
+	logEventView := m.logEvent.View()
 
 	helpView := m.help.View(m.keyMaps[m.selected])
 
-	logEventView := lipgloss.JoinVertical(
-		lipgloss.Left,
-		fmt.Sprintf(
-			"LogGroup: %s | LogStream: %s\n",
-			m.logGroupList.SelectedGroup,
-			m.logStreamList.SelectedStream,
-		),
-		lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			m.eventsList.View(),
-			m.viewportEvents.View(),
-		),
-	)
-
-	// TODO clean this up
 	switch m.selected {
 	case groupListSelected:
+		logGroupList = selectedModelStyle.Render(logGroupList)
 		logEventView = modelStyle.Render(logEventView)
-		logGroupList = selectedModelStyle.Render(m.logGroupList.View())
-		logStreamList = modelStyle.Render(m.logStreamList.View())
+		logStreamList = modelStyle.Render(logStreamList)
 	case streamListSelected:
+		logStreamList = selectedModelStyle.Render(logStreamList)
 		logEventView = modelStyle.Render(logEventView)
-		logGroupList = modelStyle.Render(m.logGroupList.View())
-		logStreamList = selectedModelStyle.Render(m.logStreamList.View())
+		logGroupList = modelStyle.Render(logGroupList)
 	case eventListSelected:
 		logEventView = selectedModelStyle.Render(logEventView)
-		logGroupList = modelStyle.Render(m.logGroupList.View())
-		logStreamList = modelStyle.Render(m.logStreamList.View())
+		logGroupList = modelStyle.Render(logGroupList)
+		logStreamList = modelStyle.Render(logStreamList)
 	}
 
-	logLists := lipgloss.JoinHorizontal(
-		lipgloss.Center,
+	logLists := lipgloss.JoinVertical(
+		lipgloss.Left,
 		logGroupList,
 		logStreamList,
 	)
 
-	logGroupAndEvents := lipgloss.JoinVertical(
+	logListsAndEvents := lipgloss.JoinHorizontal(
 		lipgloss.Left,
 		logLists,
 		logEventView,
@@ -134,7 +131,7 @@ func (m *Model) View() string {
 		lipgloss.JoinVertical(
 			lipgloss.Center,
 			helpView,
-			logGroupAndEvents,
+			logListsAndEvents,
 		),
 	)
 }
@@ -161,9 +158,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		return m.updateWindowSizes(msg)
 	case commands.UpdateViewPortContentMsg:
-		m.viewportEvents.Update(msg)
+		m.logEvent.Update(msg)
 	}
-	log.Printf("%+v\n", m.viewportEvents)
 	return m.updateSubModules(msg)
 }
 
@@ -171,42 +167,33 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	height := msg.Height - lipgloss.Height(m.help.View(keys)) - 2 // TODO add const for 2
-	width := msg.Width
+	const borderMarginSize = 4 // subtract 4 for border
+	const tuiBorder = 2
 
-	borderMarginSize := 4 // subtract 4 for border
+	height := msg.Height - lipgloss.Height(m.help.View(keys)) - tuiBorder
+	width := msg.Width - tuiBorder
 
-	logListHeight := int(float32(height) / 4.0)
-	logEventListHeight := height - logListHeight - 1  // TODO add const
-	eventViewPortHeight := height - logListHeight - 1 // TODO add const
-
-	logGroupListWidth := int(float32(width) / 2.0)
-	logStreamListWidth := width - logGroupListWidth
-
-	eventsLeftHandWidth := int(float32(width) / 3.0)
-	eventsRightHandWidth := width - eventsLeftHandWidth
-
-	m.logGroupList, cmd = m.logGroupList.Update(tea.WindowSizeMsg{
+	logGroupListWidth := int(float32(width) / 4.0)
+	logGroupListHeight := int(float32(height) / 2.0)
+	m.logGroup, cmd = m.logGroup.Update(tea.WindowSizeMsg{
 		Width:  logGroupListWidth,
-		Height: logListHeight - borderMarginSize,
+		Height: logGroupListHeight - borderMarginSize,
 	})
 	cmds = append(cmds, cmd)
 
-	m.logStreamList, cmd = m.logStreamList.Update(tea.WindowSizeMsg{
+	logStreamListWidth := int(float32(width) / 4.0)
+	logStreamListHeight := height - logGroupListHeight
+	m.logStream, cmd = m.logStream.Update(tea.WindowSizeMsg{
 		Width:  logStreamListWidth,
-		Height: logListHeight - borderMarginSize,
+		Height: logStreamListHeight - borderMarginSize,
 	})
 	cmds = append(cmds, cmd)
 
-	m.eventsList, cmd = m.eventsList.Update(tea.WindowSizeMsg{
-		Width:  eventsLeftHandWidth - borderMarginSize,
-		Height: logEventListHeight - borderMarginSize,
-	})
-	cmds = append(cmds, cmd)
-
-	m.viewportEvents, cmd = m.viewportEvents.Update(tea.WindowSizeMsg{
-		Width:  eventsRightHandWidth - borderMarginSize,
-		Height: eventViewPortHeight - borderMarginSize,
+	eventsWidth := width - logGroupListWidth
+	logEventHeight := height
+	m.logEvent, cmd = m.logEvent.Update(tea.WindowSizeMsg{
+		Width:  eventsWidth - borderMarginSize,
+		Height: logEventHeight - borderMarginSize,
 	})
 	cmds = append(cmds, cmd)
 
@@ -218,11 +205,11 @@ func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch m.selected {
 	case groupListSelected:
-		m.logGroupList, cmd = m.logGroupList.Update(msg)
+		m.logGroup, cmd = m.logGroup.Update(msg)
 	case streamListSelected:
-		m.logStreamList, cmd = m.logStreamList.Update(msg)
+		m.logStream, cmd = m.logStream.Update(msg)
 	case eventListSelected:
-		m.eventsList, cmd = m.eventsList.Update(msg)
+		m.logEvent, cmd = m.logEvent.Update(msg)
 	}
 	return m, cmd
 }
@@ -231,16 +218,13 @@ func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	m.logGroupList, cmd = m.logGroupList.Update(msg)
+	m.logGroup, cmd = m.logGroup.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.logStreamList, cmd = m.logStreamList.Update(msg)
+	m.logStream, cmd = m.logStream.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.eventsList, cmd = m.eventsList.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.viewportEvents, cmd = m.viewportEvents.Update(msg)
+	m.logEvent, cmd = m.logEvent.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)

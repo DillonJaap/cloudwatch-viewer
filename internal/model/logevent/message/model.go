@@ -1,4 +1,4 @@
-package logeventviewport
+package message
 
 import (
 	"fmt"
