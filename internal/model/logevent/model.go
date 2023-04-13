@@ -43,19 +43,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		height := msg.Height - 4 // TODO add const
-		timestampWidth := int(float32(msg.Width) / 3.0)
-		messageWidth := msg.Width - timestampWidth
-
-		m.Timestamp.Update(tea.WindowSizeMsg{
-			Width:  timestampWidth,
-			Height: height,
-		})
-		m.Messages.Update(tea.WindowSizeMsg{
-			Width:  messageWidth,
-			Height: height,
-		})
-		return m, nil
+		return m.handleUpdateWindowSize(msg)
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "h", "j", "k", "l":
@@ -76,6 +64,32 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	m.Messages, cmd = m.Messages.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m Model) handleUpdateWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	const statusBarHeight = 4
+
+	height := msg.Height - statusBarHeight
+
+	timestampWidth := int(float32(msg.Width) / 3.0)
+	messageWidth := msg.Width - timestampWidth
+
+	m.Timestamp, cmd = m.Timestamp.Update(tea.WindowSizeMsg{
+		Width:  timestampWidth,
+		Height: height,
+	})
+	cmds = append(cmds, cmd)
+
+	m.Messages, cmd = m.Messages.Update(tea.WindowSizeMsg{
+		Width:  messageWidth,
+		Height: height,
+	})
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
