@@ -153,6 +153,20 @@ func (m Model) updateKeyMsg(msg tea.KeyMsg) (Model, tea.Cmd) {
 			m.ItemMetaData[index].lineNum,
 		)
 		return m, cmd
+	case "J":
+		m.List.CursorDown()
+		cmd = commands.UpdateViewPort(
+			m.getItemListAsStringArray(),
+			m.getLineNumber(),
+		)
+		return m, cmd
+	case "K":
+		m.List.CursorUp()
+		cmd = commands.UpdateViewPort(
+			m.getItemListAsStringArray(),
+			m.getLineNumber(),
+		)
+		return m, cmd
 	// all other keystrokes get handled by the list Model
 	// and then the viewport gets updated
 	default:

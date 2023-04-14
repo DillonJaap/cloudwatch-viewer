@@ -1,4 +1,4 @@
-package logstreamlist
+package logstream
 
 import (
 	"fmt"

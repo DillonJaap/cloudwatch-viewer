@@ -1,4 +1,4 @@
-package loggrouplist
+package loggroup
 
 import (
 	"fmt"

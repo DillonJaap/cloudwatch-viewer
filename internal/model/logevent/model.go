@@ -45,14 +45,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		return m.handleUpdateWindowSize(msg)
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "h", "j", "k", "l":
-			m.Messages, cmd = m.Messages.Update(msg)
-			return m, cmd
-		default:
-			m.Timestamp, cmd = m.Timestamp.Update(msg)
-			return m, cmd
-		}
+		return m.handleUpdateKey(msg)
 	case commands.UpdateEventListItemsMsg:
 		m.selectedGroup = msg.Group
 		m.selectedStream = msg.Stream
@@ -67,6 +60,26 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m Model) View() string {
+	logEventView := lipgloss.JoinVertical(
+		lipgloss.Left,
+		doubleBorder.Render(fmt.Sprintf(
+			" %s: %s %s: %s ",
+			bold.Render("LogGroup"),
+			purpleText.Render(m.selectedGroup),
+			bold.Render("LogStream"),
+			purpleText.Render(m.selectedStream),
+		))+"\n",
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.Timestamp.View(),
+			m.Messages.View(),
+		),
+	)
+
+	return logEventView
 }
 
 func (m Model) handleUpdateWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
@@ -95,22 +108,15 @@ func (m Model) handleUpdateWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
-	logEventView := lipgloss.JoinVertical(
-		lipgloss.Left,
-		doubleBorder.Render(fmt.Sprintf(
-			" %s: %s %s: %s ",
-			bold.Render("LogGroup"),
-			purpleText.Render(m.selectedGroup),
-			bold.Render("LogStream"),
-			purpleText.Render(m.selectedStream),
-		))+"\n",
-		lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			m.Timestamp.View(),
-			m.Messages.View(),
-		),
-	)
+func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
 
-	return logEventView
+	switch keypress := msg.String(); keypress {
+	case "h", "j", "k", "l":
+		m.Messages, cmd = m.Messages.Update(msg)
+		return m, cmd
+	default:
+		m.Timestamp, cmd = m.Timestamp.Update(msg)
+		return m, cmd
+	}
 }

@@ -13,8 +13,8 @@ import (
 	event "clviewer/internal/model/logevent"
 	"clviewer/internal/model/logevent/message"
 	"clviewer/internal/model/logevent/timestamp"
-	group "clviewer/internal/model/loggrouplist"
-	stream "clviewer/internal/model/logstreamlist"
+	group "clviewer/internal/model/loggroup"
+	stream "clviewer/internal/model/logstream"
 )
 
 var (

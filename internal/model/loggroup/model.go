@@ -1,8 +1,6 @@
-package logstreamlist
+package loggroup
 
 import (
-	"log"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -28,29 +26,30 @@ var (
 )
 
 type Model struct {
-	List           list.Model
-	SelectedStream string
-	currentGroup   string
-	padding        int
+	List          list.Model
+	SelectedGroup string
+	padding       int
 }
 
 func New(
 	title string,
+	name string,
 ) Model {
-	streamList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
+	itemList := GetLogGroupsAsItemList(name)
 
-	streamList.SetShowStatusBar(false)
-	streamList.SetFilteringEnabled(true)
-	streamList.SetShowHelp(false)
+	groupList := list.New(itemList, &ItemDelegate{}, 0, 0)
 
-	streamList.Title = title
-	streamList.Styles.Title = titleStyle
-	streamList.Styles.PaginationStyle = paginationStyle
+	groupList.SetShowStatusBar(false)
+	groupList.SetFilteringEnabled(true)
+	groupList.SetShowHelp(false)
+
+	groupList.Title = title
+	groupList.Styles.Title = titleStyle
+	groupList.Styles.PaginationStyle = paginationStyle
 
 	return Model{
-		List:           streamList,
-		SelectedStream: "",
-		currentGroup:   "",
+		List:          groupList,
+		SelectedGroup: "",
 	}
 }
 
@@ -59,17 +58,10 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
-
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
 		m.List.SetHeight(msg.Height)
-
-		log.Printf("%+v\n", m.padding)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -78,33 +70,19 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "enter":
 			i, ok := m.List.SelectedItem().(Item)
 			if ok {
-				m.SelectedStream = string(i)
+				m.SelectedGroup = string(i)
 			}
 
-			return m, commands.UpdateEventListItems(m.currentGroup, m.SelectedStream)
+			return m, commands.UpdateStreamListItems(m.SelectedGroup)
 		}
-	case commands.UpdateStreamListItemsMsg:
-		m.currentGroup = msg.Group
-		cmd = m.UpdateStreamItems(m.currentGroup)
-		cmds = append(cmds, cmd)
 	}
-
+	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
-	cmds = append(cmds, cmd)
-
-	return m, tea.Batch(cmds...)
+	return m, cmd
 }
 
 func (m Model) View() string {
 	return lipgloss.NewStyle().
 		PaddingRight(m.List.Width() - lipgloss.Width(m.List.View())).
 		Render(m.List.View())
-}
-
-func (m *Model) UpdateStreamItems(groupPattern string) tea.Cmd {
-	// reset list
-	m.SelectedStream = ""
-	m.List.FilterInput.SetCursor(0)
-	itemList := GetLogStreamsAsItemList(groupPattern)
-	return m.List.SetItems(itemList)
 }
