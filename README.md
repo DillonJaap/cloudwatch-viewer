@@ -26,7 +26,8 @@
 - [ ] custom keybindings
 - [ ] refactor code - group related models - use more composition - simplify spacing between views 
 - [ ] proper filtering for messages / add search for messages viewport
-- [ ] viewport scroll (vertical and horizontal)
+- [x] viewport scroll (vertical)
+- [ ] viewport scroll (horizontal)
 - [ ] viewport copy message keybind
 - [ ] add last event time to logstream list (change list into table?)
 

@@ -64,3 +64,17 @@ debug 2023/04/13 14:56:07 0
 debug 2023/04/13 14:56:07 0
 debug 2023/04/13 14:56:11 0
 debug 2023/04/13 20:07:50 0
+debug 2023/04/13 20:27:26 operation error CloudWatch Logs: DescribeLogGroups, https response error StatusCode: 400, RequestID: bfc60cc9-a5b1-444c-9deb-2efe6f319d33, api error ExpiredTokenException: The security token included in the request is expired
+debug 2023/04/13 20:27:59 0
+debug 2023/04/13 20:28:10 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: 6c4bd19a-5545-48f6-a14d-3921d2c9cf96, api error ThrottlingException: Rate exceeded
+debug 2023/04/13 20:28:14 0
+debug 2023/04/13 20:29:26 0
+debug 2023/04/13 20:32:20 0
+debug 2023/04/13 20:33:58 0
+debug 2023/04/13 20:57:38 0
+debug 2023/04/13 21:14:26 0
+debug 2023/04/14 07:53:42 0
+debug 2023/04/14 08:26:12 operation error CloudWatch Logs: DescribeLogGroups, https response error StatusCode: 400, RequestID: 3e0308a8-75b7-4d12-9dd8-2551e0e62c05, api error ExpiredTokenException: The security token included in the request is expired
+debug 2023/04/14 08:26:33 operation error CloudWatch Logs: DescribeLogGroups, https response error StatusCode: 400, RequestID: 7521398f-7fb2-4748-aabf-a632b004f2e7, InvalidParameterException: 1 validation error detected: Value '1000' at 'limit' failed to satisfy constraint: Member must have value less than or equal to 50
+debug 2023/04/14 16:09:37 0
+debug 2023/04/16 16:03:34 0

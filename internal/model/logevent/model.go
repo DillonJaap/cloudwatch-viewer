@@ -112,11 +112,11 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch keypress := msg.String(); keypress {
-	case "h", "j", "k", "l":
-		m.Messages, cmd = m.Messages.Update(msg)
+	case "H", "J", "K", "L", "enter", "c", "/":
+		m.Timestamp, cmd = m.Timestamp.Update(msg)
 		return m, cmd
 	default:
-		m.Timestamp, cmd = m.Timestamp.Update(msg)
+		m.Messages, cmd = m.Messages.Update(msg)
 		return m, cmd
 	}
 }

@@ -74,7 +74,7 @@ func New(ctx context.Context) *Model {
 		},
 		logGroup: group.New(
 			"Log Groups",
-			"/aws/lambda/dev-djaap",
+			"/aws/lambda",
 		),
 		logStream: stream.New(
 			"Log Streams",

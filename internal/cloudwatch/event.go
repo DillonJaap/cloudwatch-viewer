@@ -69,13 +69,26 @@ func GetLogGroups(ctx context.Context, in cloudwatchlogs.DescribeLogGroupsInput)
 
 	// get cloudwatch client
 	cwClient := cloudwatchlogs.NewFromConfig(cfg)
+	cwPaginator := cloudwatchlogs.NewDescribeLogGroupsPaginator(cwClient, &in)
+
+	// get all the log groups
+	var logGroups []types.LogGroup
+	for cwPaginator.HasMorePages() {
+		output, err := cwPaginator.NextPage(ctx)
+		logGroups = append(logGroups, output.LogGroups...)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	// get log groups
-	logGroupsOutput, err := cwClient.DescribeLogGroups(ctx, &in)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return logGroupsOutput.LogGroups
+	/*
+		logGroupsOutput, err := cwClient.DescribeLogGroups(ctx, &in)
+		if err != nil {
+			log.Fatal(err)
+		}
+	*/
+	return logGroups
 }
 
 func GetLogStreams(ctx context.Context, in cloudwatchlogs.DescribeLogStreamsInput) []types.LogStream {
