@@ -30,5 +30,6 @@
 - [ ] viewport scroll (horizontal)
 - [ ] viewport copy message keybind
 - [ ] add last event time to logstream list (change list into table?)
+- [ ] clean up log.fatal() figure out a better way to handle it
 
 - [ ] clean up code & add comments

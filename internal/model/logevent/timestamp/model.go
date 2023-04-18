@@ -1,10 +1,13 @@
 package timestamp
 
 import (
+	"context"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"clviewer/internal/cloudwatch/event"
 	"clviewer/internal/commands"
 )
 
@@ -26,9 +29,10 @@ var (
 )
 
 type Model struct {
-	List         list.Model
-	Choice       string
-	ItemMetaData []ItemMetaData
+	List           list.Model
+	Choice         string
+	ItemMetaData   []ItemMetaData
+	eventPaginator *event.Paginator
 }
 
 type ItemMetaData struct {
@@ -52,9 +56,10 @@ func New(
 	eventList.Styles.HelpStyle = helpStyle
 
 	return Model{
-		List:         eventList,
-		Choice:       "",
-		ItemMetaData: []ItemMetaData{},
+		List:           eventList,
+		Choice:         "",
+		ItemMetaData:   []ItemMetaData{},
+		eventPaginator: nil,
 	}
 }
 
@@ -99,11 +104,17 @@ func (m Model) updateEventListItems(
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
+	ctx := context.Background()
 	// reset list
 	m.Choice = ""
 
+	// update event paginator
+	paginator := event.New(ctx, groupPattern, streamPrefix)
+	m.eventPaginator = &paginator
+
 	// update item list
-	itemList := GetLogEventsAsItemList(groupPattern, streamPrefix)
+	events := m.eventPaginator.NextPage(ctx)
+	itemList := m.GetLogEventsAsItemList(events)
 	itemList = formatList(itemList, false)
 	cmd = m.List.SetItems(itemList)
 	cmds = append(cmds, cmd)

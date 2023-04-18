@@ -1,7 +1,6 @@
 package timestamp
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -10,9 +9,8 @@ import (
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/charmbracelet/bubbles/list"
-
-	cw "clviewer/internal/cloudwatch"
 )
 
 var (
@@ -57,21 +55,15 @@ func (i Item) getTruncatedDescription(maxLength int) string {
 	return msg
 }
 
-func GetLogEventsAsItemList(logGroupPattern string, logStreamPrefix string) []list.Item {
-	logEvents := cw.GetEvents(
-		context.Background(),
-		logGroupPattern,
-		logStreamPrefix,
-	)
-
-	var events []list.Item
-
+// TODO should this go in model.go?
+func (m *Model) GetLogEventsAsItemList(logEvents []types.OutputLogEvent) []list.Item {
+	var items []list.Item
 	for k := range logEvents {
 		msg := aws.ToString(logEvents[k].Message)
 		timeStamp := logEvents[k].Timestamp
 
-		events = append(
-			events,
+		items = append(
+			items,
 			Item{
 				Message:   msg,
 				TimeStamp: fmt.Sprintf("%v", *timeStamp),
@@ -79,7 +71,7 @@ func GetLogEventsAsItemList(logGroupPattern string, logStreamPrefix string) []li
 		)
 	}
 
-	return events
+	return items
 }
 
 func formatList(itemList []list.Item, formatAsJson bool) []list.Item {
