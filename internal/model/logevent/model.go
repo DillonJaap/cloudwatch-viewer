@@ -3,6 +3,7 @@ package logevent
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -29,9 +30,18 @@ type Model struct {
 	Messages       message.Model
 	selectedGroup  string
 	selectedStream string
+	help           help.Model
 }
 
-// TODO should I add a New() function?
+func New(timestampe timestamp.Model, msg message.Model, help help.Model) Model {
+	return Model{
+		Timestamp:      timestampe,
+		Messages:       message.Model{},
+		selectedGroup:  "",
+		selectedStream: "",
+		help:           help,
+	}
+}
 
 func (m Model) Init() tea.Cmd {
 	return nil
@@ -79,6 +89,14 @@ func (m Model) View() string {
 		),
 	)
 
+	helpView := m.help.View(keys)
+
+	logEventView = lipgloss.JoinVertical(
+		lipgloss.Center,
+		logEventView,
+		helpView,
+	)
+
 	return logEventView
 }
 
@@ -87,8 +105,9 @@ func (m Model) handleUpdateWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	const statusBarHeight = 4
+	const helpHeight = 2
 
-	height := msg.Height - statusBarHeight
+	height := msg.Height - statusBarHeight - helpHeight
 
 	timestampWidth := int(float32(msg.Width) / 3.0)
 	messageWidth := msg.Width - timestampWidth

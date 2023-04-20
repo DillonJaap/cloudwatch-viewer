@@ -1,4 +1,4 @@
-package keymap
+package logevent
 
 import "github.com/charmbracelet/bubbles/key"
 
@@ -10,6 +10,7 @@ type keyMap struct {
 	Help        key.Binding
 	Quit        key.Binding
 	Filter      key.Binding
+	LoadMore    key.Binding
 	Collapse    key.Binding
 	CollapseAll key.Binding
 	NextWindow  key.Binding
@@ -25,13 +26,13 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Up, k.Down},
 		{k.Left, k.Right},
 		{k.Collapse, k.CollapseAll},
-		{k.Filter},
+		{k.Filter, k.LoadMore},
 		{k.NextWindow, k.PrevWindow},
 		{k.Help, k.Quit},
 	}
 }
 
-var Keys = keyMap{
+var keys = keyMap{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "next item"),
@@ -59,6 +60,10 @@ var Keys = keyMap{
 	Filter: key.NewBinding(
 		key.WithKeys("/"),
 		key.WithHelp("/", "filter"),
+	),
+	LoadMore: key.NewBinding(
+		key.WithKeys("L"),
+		key.WithHelp("L", "load more events"),
 	),
 	Collapse: key.NewBinding(
 		key.WithKeys("enter"),

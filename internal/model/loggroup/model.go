@@ -41,7 +41,7 @@ func New(
 
 	groupList.SetShowStatusBar(false)
 	groupList.SetFilteringEnabled(true)
-	groupList.SetShowHelp(false)
+	groupList.SetShowHelp(true)
 
 	groupList.Title = title
 	groupList.Styles.Title = titleStyle

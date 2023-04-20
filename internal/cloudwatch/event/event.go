@@ -51,7 +51,7 @@ func New(ctx context.Context, logGroupPattern, logStreamPrefix string) Paginator
 		&cloudwatchlogs.GetLogEventsInput{
 			LogStreamName: logStreamName,
 			LogGroupName:  logGroupName,
-			Limit:         aws.Int32(45),
+			Limit:         aws.Int32(50),
 			StartFromHead: aws.Bool(true),
 		},
 	)

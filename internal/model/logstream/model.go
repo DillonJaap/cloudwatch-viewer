@@ -1,12 +1,13 @@
 package logstream
 
 import (
-	"log"
+	"context"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"clviewer/internal/cloudwatch/stream"
 	"clviewer/internal/commands"
 )
 
@@ -28,10 +29,10 @@ var (
 )
 
 type Model struct {
-	List           list.Model
-	SelectedStream string
-	currentGroup   string
-	padding        int
+	List            list.Model
+	SelectedStream  string
+	currentGroup    string
+	streamPaginator *stream.Paginator
 }
 
 func New(
@@ -41,7 +42,7 @@ func New(
 
 	streamList.SetShowStatusBar(false)
 	streamList.SetFilteringEnabled(true)
-	streamList.SetShowHelp(false)
+	streamList.SetShowHelp(true)
 
 	streamList.Title = title
 	streamList.Styles.Title = titleStyle
@@ -68,13 +69,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
 		m.List.SetHeight(msg.Height)
-
-		log.Printf("%+v\n", m.padding)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "ctrl+c":
 			return m, tea.Quit
+		case "L":
+			return m, m.loadMoreStreams()
 		case "enter":
 			i, ok := m.List.SelectedItem().(Item)
 			if ok {
@@ -85,7 +86,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	case commands.UpdateStreamListItemsMsg:
 		m.currentGroup = msg.Group
-		cmd = m.UpdateStreamItems(m.currentGroup)
+		m, cmd = m.UpdateStreamItems(m.currentGroup)
 		cmds = append(cmds, cmd)
 	}
 
@@ -101,10 +102,34 @@ func (m Model) View() string {
 		Render(m.List.View())
 }
 
-func (m *Model) UpdateStreamItems(groupPattern string) tea.Cmd {
+func (m *Model) loadMoreStreams() tea.Cmd {
+	ctx := context.Background()
+
+	streams := m.streamPaginator.NextPage(ctx)
+	if streams == nil {
+		return nil
+	}
+
+	// Get streams into a formatted item list
+	itemList := m.List.Items()
+	itemList = append(itemList, GetLogStreamsAsItemList(streams)...)
+
+	return m.List.SetItems(itemList)
+}
+
+func (m Model) UpdateStreamItems(groupName string) (Model, tea.Cmd) {
+	ctx := context.Background()
+
 	// reset list
 	m.SelectedStream = ""
 	m.List.FilterInput.SetCursor(0)
-	itemList := GetLogStreamsAsItemList(groupPattern)
-	return m.List.SetItems(itemList)
+	m.List.SetItems(nil)
+
+	// get a new paginator for our log stream
+	paginator := stream.New(ctx, groupName)
+	m.streamPaginator = &paginator
+
+	// itemList := GetLogStreamsAsItemList(groupPattern)
+	// return m.List.SetItems(itemList)
+	return m, m.loadMoreStreams()
 }

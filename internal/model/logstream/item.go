@@ -1,14 +1,9 @@
 package logstream
 
 import (
-	"context"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/charmbracelet/bubbles/list"
-
-	cw "clviewer/internal/cloudwatch"
 )
 
 const maxDescriptionLength = 90
@@ -18,22 +13,13 @@ type Item string
 
 func (i Item) FilterValue() string { return string(i) }
 
-func GetLogStreamsAsItemList(pattern string) []list.Item {
-	logStreams := cw.GetLogStreams(context.Background(), cloudwatchlogs.DescribeLogStreamsInput{
-		LogGroupName: aws.String(pattern),
-		Limit:        aws.Int32(30),
-		OrderBy:      types.OrderByLastEventTime,
-		Descending:   aws.Bool(true),
-	})
-
-	var streams []list.Item
-
-	for k := range logStreams {
-		name := aws.ToString(logStreams[k].LogStreamName)
-		streams = append(streams, Item(name))
+func GetLogStreamsAsItemList(streams []types.LogStream) []list.Item {
+	var items []list.Item
+	for k := range streams {
+		msg := aws.ToString(streams[k].LogStreamName)
+		items = append(items, Item(msg))
 	}
-
-	return streams
+	return items
 }
 
 func (i Item) getTruncatedDescription(maxLength int) string {

@@ -4,7 +4,8 @@
 - [ ] add cache for log stream and events
 - [ ] add search all log streams filtering
 - [ ] add saved searches
-- [ ] paginate log events & streams
+- [x] paginate log events
+- [ ] paginate log Streams
 - [ ] fix filter spacing
 - [x] fix json formatting
 - [ ] create unified help menu
@@ -31,5 +32,7 @@
 - [ ] viewport copy message keybind
 - [ ] add last event time to logstream list (change list into table?)
 - [ ] clean up log.fatal() figure out a better way to handle it
+- [ ] use terminal colors
+- [ ] add seperator for help items
 
-- [ ] clean up code & add comments
+- [ ] clean up code & add comments & clean up TODOs

@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"clviewer/internal/commands"
-	"clviewer/internal/keymap"
 	event "clviewer/internal/model/logevent"
 	"clviewer/internal/model/logevent/message"
 	"clviewer/internal/model/logevent/timestamp"
@@ -54,7 +53,6 @@ type Model struct {
 	logGroup  group.Model
 	logStream stream.Model
 	help      help.Model
-	keyMaps   []help.KeyMap
 	selected  int
 }
 
@@ -62,16 +60,17 @@ func New(ctx context.Context) *Model {
 	helpModel := help.New()
 	helpModel.ShowAll = true
 	return &Model{
-		logEvent: event.Model{
-			Timestamp: timestamp.New(
+		logEvent: event.New(
+			timestamp.New(
 				"Timestamps",
 				false,
 			),
-			Messages: message.New(
+			message.New(
 				"Log Messages",
 				"...",
 			),
-		},
+			helpModel,
+		),
 		logGroup: group.New(
 			"Log Groups",
 			"/aws/lambda",
@@ -79,11 +78,6 @@ func New(ctx context.Context) *Model {
 		logStream: stream.New(
 			"Log Streams",
 		),
-		keyMaps: []help.KeyMap{
-			keys,
-			keys,
-			keymap.Keys,
-		},
 		help:     helpModel,
 		selected: eventListSelected,
 	}
@@ -98,7 +92,7 @@ func (m *Model) View() string {
 	logStreamList := m.logStream.View()
 	logEventView := m.logEvent.View()
 
-	helpView := m.help.View(m.keyMaps[m.selected])
+	helpView := m.help.View(keys)
 
 	switch m.selected {
 	case groupListSelected:
@@ -177,7 +171,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	logGroupListHeight := int(float32(height) / 2.0)
 	m.logGroup, cmd = m.logGroup.Update(tea.WindowSizeMsg{
 		Width:  logGroupListWidth,
-		Height: logGroupListHeight - borderMarginSize,
+		Height: logGroupListHeight - borderMarginSize/2,
 	})
 	cmds = append(cmds, cmd)
 
@@ -185,7 +179,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	logStreamListHeight := height - logGroupListHeight
 	m.logStream, cmd = m.logStream.Update(tea.WindowSizeMsg{
 		Width:  logStreamListWidth,
-		Height: logStreamListHeight - borderMarginSize,
+		Height: logStreamListHeight - borderMarginSize/2,
 	})
 	cmds = append(cmds, cmd)
 
