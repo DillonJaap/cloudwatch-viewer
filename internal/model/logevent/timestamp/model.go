@@ -1,8 +1,7 @@
 package timestamp
 
 import (
-	"context"
-
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -31,43 +30,17 @@ var (
 type Model struct {
 	List           list.Model
 	Choice         string
-	ItemMetaData   []ItemMetaData
 	CollapseAll    bool
 	eventPaginator *event.Paginator
-}
-
-type ItemMetaData struct {
-	Collapsed bool
-	lineNum   int
-}
-
-func New(
-	title string,
-	collapsed bool,
-) Model {
-	eventList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
-
-	eventList.SetShowStatusBar(false)
-	eventList.SetFilteringEnabled(true)
-	eventList.SetShowHelp(false)
-
-	eventList.Title = title
-	eventList.Styles.Title = titleStyle
-	eventList.Styles.PaginationStyle = paginationStyle
-	eventList.Styles.HelpStyle = helpStyle
-
-	return Model{
-		List:           eventList,
-		Choice:         "",
-		CollapseAll:    true,
-		ItemMetaData:   []ItemMetaData{},
-		eventPaginator: nil,
-	}
 }
 
 func (m Model) Init() tea.Cmd {
 	return nil
 }
+
+type LoadMoreEventsMsg []types.OutputLogEvent
+
+type ResetMsg struct{}
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -80,9 +53,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		return m.updateKeyMsg(msg)
-	case commands.UpdateEventListItemsMsg:
-		m, cmd = m.updateEventListItems(msg.Group, msg.Stream)
-		cmds = append(cmds, cmd)
+	case LoadMoreEventsMsg:
+		m.List.SetItems(append(
+			m.List.Items(),
+			logEventsToItemList(msg)...,
+		))
+	case ResetMsg:
+		m.List.Update([]list.Item{})
 	}
 
 	m.List, cmd = m.List.Update(msg)
@@ -116,16 +93,6 @@ func (m Model) updateKeyMsg(msg tea.KeyMsg) (Model, tea.Cmd) {
 		)
 		return m, cmd
 	// Toggle Collapse all
-	case "c":
-		m.toggleCollapseAll()
-		cmd = commands.UpdateViewPort(
-			m.getItemListAsStringArray(),
-			m.ItemMetaData[index].lineNum,
-		)
-		return m, cmd
-	// Load more events messages
-	case "L":
-		return m, m.loadMoreEvents()
 	case "J":
 		m.List.CursorDown()
 		cmd = commands.UpdateViewPort(
@@ -162,6 +129,7 @@ func (m *Model) getItemListAsStringArray() []string {
 	height := 0
 
 	for index, item := range m.List.Items() {
+		// TODO do I need to format this?
 		formattedItem := FormatMessage(
 			item.FilterValue(),
 			!m.ItemMetaData[index].Collapsed,
@@ -179,86 +147,10 @@ func (m *Model) getItemListAsStringArray() []string {
 	return list
 }
 
-func (m *Model) toggleCollapseAll() {
-	collapseItems := true
-
-	for k := range m.ItemMetaData {
-		if m.ItemMetaData[k].Collapsed {
-			collapseItems = false
-			break
-		}
-	}
-
-	for k := range m.ItemMetaData {
-		m.ItemMetaData[k].Collapsed = collapseItems
-	}
-}
-
 func (m Model) getLineNumber() int {
 	lineNum := 0
 	if len(m.ItemMetaData) > m.List.Index()+1 {
 		lineNum = m.ItemMetaData[m.List.Index()].lineNum
 	}
 	return lineNum
-}
-
-// loadMoreEvents loads more events into the item list
-func (m *Model) loadMoreEvents() tea.Cmd {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
-
-	ctx := context.Background()
-
-	events := m.eventPaginator.NextPage(ctx)
-	if events == nil {
-		return nil
-	}
-
-	// Get events into a formatted item list
-	itemList := m.List.Items()
-	itemList = append(itemList, m.GetLogEventsAsItemList(events)...)
-	itemList = formatList(itemList, false)
-
-	// update item meta data
-	metaData := make([]ItemMetaData, len(itemList))
-	// TODO could update to only collapse new items
-	for i := range metaData {
-		metaData[i].Collapsed = m.CollapseAll
-	}
-	m.ItemMetaData = metaData
-
-	// Load items into list
-	cmd = m.List.SetItems(itemList)
-	cmds = append(cmds, cmd)
-
-	// update viewport
-	cmd = commands.UpdateViewPort(
-		m.getItemListAsStringArray(),
-		m.getLineNumber(),
-	)
-	cmds = append(cmds, cmd)
-
-	return tea.Batch(cmds...)
-}
-
-// updateEventListItems updates the event lists with new messages from the new
-// group/stream and refreshes the viewport
-func (m Model) updateEventListItems(
-	groupPattern string,
-	streamPrefix string,
-) (Model, tea.Cmd) {
-	ctx := context.Background()
-
-	// reset list
-	m.Choice = ""
-	m.List.SetItems(nil)
-
-	// get a new paginator for our log group & stream
-	paginator := event.New(ctx, groupPattern, streamPrefix)
-	m.eventPaginator = &paginator
-
-	// update item list
-	return m, m.loadMoreEvents()
 }

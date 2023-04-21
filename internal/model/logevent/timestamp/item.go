@@ -55,8 +55,7 @@ func (i Item) getTruncatedDescription(maxLength int) string {
 	return msg
 }
 
-// TODO should this go in model.go?
-func (m *Model) GetLogEventsAsItemList(logEvents []types.OutputLogEvent) []list.Item {
+func logEventsToItemList(logEvents []types.OutputLogEvent) []list.Item {
 	var items []list.Item
 	for k := range logEvents {
 		msg := aws.ToString(logEvents[k].Message)
@@ -72,26 +71,6 @@ func (m *Model) GetLogEventsAsItemList(logEvents []types.OutputLogEvent) []list.
 	}
 
 	return items
-}
-
-func formatList(itemList []list.Item, formatAsJson bool) []list.Item {
-	var formattedList []list.Item
-	for _, item := range itemList {
-		event, ok := item.(Item)
-		if !ok {
-			formattedList = append(formattedList, item)
-			continue
-		}
-
-		formattedList = append(
-			formattedList,
-			Item{
-				Message:   FormatMessage(event.Message, formatAsJson),
-				TimeStamp: event.TimeStamp,
-			},
-		)
-	}
-	return formattedList
 }
 
 func FormatMessage(in string, formatAsJson bool) string {

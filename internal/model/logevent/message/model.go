@@ -1,9 +1,13 @@
 package message
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/TylerBrock/colorjson"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -30,6 +34,8 @@ var (
 	}()
 
 	lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("98"))
+
+	selectedItemStyleViewPort = lipgloss.NewStyle().Foreground(lipgloss.Color("127"))
 )
 
 type Model struct {
@@ -37,6 +43,14 @@ type Model struct {
 	Events   string
 	Ready    bool
 	Viewport viewport.Model
+	messages []message
+	index    int
+}
+
+type message struct {
+	content    string
+	collapsed  bool
+	lineNumber int
 }
 
 func New(title string, events string) Model {
@@ -51,6 +65,15 @@ func New(title string, events string) Model {
 func (m Model) Init() tea.Cmd {
 	return nil
 }
+
+type LoadMoreEventsMsg struct {
+	AwsLogEvents []types.OutputLogEvent
+	Collapsed    bool
+}
+
+type ResetMsg struct{}
+
+type ToggleCollapsedMsg struct{}
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
@@ -83,7 +106,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case commands.UpdateViewPortContentMsg:
 		m.Viewport.SetContent(m.FormatList(msg.Content))
 		// Center selected item in the viewport
+		// TODO add updateViewPort and viewport scroll msg
 		m.Viewport.SetYOffset(max(0, msg.YOffset-(m.Viewport.Height/2)))
+		return m, nil
+	case LoadMoreEventsMsg:
+		m.messages = eventsToMessages(msg.AwsLogEvents, msg.Collapsed)
+		m.Viewport.SetContent(m.renderContent())
+		return m, nil
+	case ToggleCollapsedMsg:
+		collapseItems := true
+
+		// if any are collapsed then don't set all to collapsed
+		for k := range m.messages {
+			if m.messages[k].collapsed {
+				collapseItems = false
+				break
+			}
+		}
+		for k := range m.messages {
+			m.messages[k].collapsed = collapseItems
+		}
+
+		m.Viewport.SetContent(m.renderContent())
 		return m, nil
 	}
 
@@ -138,4 +182,62 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func (m *Model) renderContent() string {
+	var content string
+
+	for i, event := range m.messages {
+		formattedItem := FormatMessage(
+			event.content,
+			!event.collapsed,
+		)
+
+		if m.index == i {
+			content += selectedItemStyleViewPort.Render(formattedItem) + "\n"
+		} else {
+			content += formattedItem + "\n"
+		}
+
+		// Set line number
+		m.messages[i].lineNumber = lipgloss.Height(formattedItem)
+	}
+	return content
+}
+
+func FormatMessage(in string, formatAsJson bool) string {
+	in = strings.ReplaceAll(in, "\t", " ")
+	in = strings.ReplaceAll(in, "\n", " ")
+
+	if in[0] == '{' && formatAsJson {
+		return formatJson(in)
+	}
+	return in
+}
+
+func formatJson(in string) string {
+	var obj map[string]interface{}
+	json.Unmarshal([]byte(in), &obj)
+
+	f := colorjson.NewFormatter()
+	f.Indent = 2
+
+	s, _ := f.Marshal(obj)
+	return string(s)
+}
+
+func eventsToMessages(logEvents []types.OutputLogEvent, collaped bool) []message {
+	var events []message
+	for k := range logEvents {
+		events = append(
+			events,
+			message{
+				content:    aws.ToString(logEvents[k].Message),
+				collapsed:  collaped,
+				lineNumber: k, // TODO should line number start at one?
+			},
+		)
+	}
+
+	return events
 }

@@ -1,12 +1,14 @@
 package logevent
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"clviewer/internal/cloudwatch/event"
 	"clviewer/internal/commands"
 	"clviewer/internal/model/logevent/message"
 	"clviewer/internal/model/logevent/timestamp"
@@ -28,6 +30,7 @@ var (
 type Model struct {
 	Timestamp      timestamp.Model
 	Messages       message.Model
+	eventPaginator *event.Paginator
 	selectedGroup  string
 	selectedStream string
 	help           help.Model
@@ -56,11 +59,33 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m.handleUpdateWindowSize(msg)
 	case tea.KeyMsg:
 		return m.handleUpdateKey(msg)
+	case commands.UpdateStreamListItemsMsg:
+		m.selectedGroup = msg.Group
+		return m, nil
 	case commands.UpdateEventListItemsMsg:
 		m.selectedGroup = msg.Group
 		m.selectedStream = msg.Stream
-	case commands.UpdateStreamListItemsMsg:
-		m.selectedGroup = msg.Group
+
+		// get a new paginator for our log group & stream
+		paginator := event.New(
+			context.Background(),
+			m.selectedGroup,
+			m.selectedStream,
+		)
+		m.eventPaginator = &paginator
+
+		{ // reset data
+			m.Timestamp, cmd = m.Timestamp.Update(timestamp.ResetMsg{})
+			cmds = append(cmds, cmd)
+			m.Messages, cmd = m.Messages.Update(message.ResetMsg{})
+			cmds = append(cmds, cmd)
+		}
+
+		// get initial set of events
+		cmd = m.loadMoreEvents()
+		cmds = append(cmds, cmd)
+
+		return m, tea.Batch(cmds...)
 	}
 
 	m.Timestamp, cmd = m.Timestamp.Update(msg)
@@ -131,11 +156,50 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch keypress := msg.String(); keypress {
-	case "H", "J", "K", "L", "enter", "c", "/":
+	case "L":
+		return m, m.loadMoreEvents()
+	case "enter":
+	case "H", "J", "K", "/":
 		m.Timestamp, cmd = m.Timestamp.Update(msg)
+		return m, cmd
+	case "c":
+		m.toggleCollapseAll()
+		cmd = commands.UpdateViewPort(
+			m.getItemListAsStringArray(),
+			m.ItemMetaData[index].lineNum,
+		)
 		return m, cmd
 	default:
 		m.Messages, cmd = m.Messages.Update(msg)
 		return m, cmd
 	}
+	return m, nil
+}
+
+func (m *Model) loadMoreEvents() tea.Cmd {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
+	ctx := context.Background()
+
+	events := m.eventPaginator.NextPage(ctx)
+	if events == nil {
+		return nil
+	}
+
+	{ // update models with events
+		m.Timestamp, cmd = m.Timestamp.Update(
+			timestamp.LoadMoreEventsMsg(events),
+		)
+		cmds = append(cmds, cmd)
+
+		m.Messages, cmd = m.Messages.Update(message.LoadMoreEventsMsg{
+			AwsLogEvents: events,
+			Collapsed:    true,
+		})
+		cmds = append(cmds, cmd)
+	}
+	return tea.Batch(cmds...)
 }
