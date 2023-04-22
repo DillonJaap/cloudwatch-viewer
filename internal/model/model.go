@@ -61,14 +61,8 @@ func New(ctx context.Context) *Model {
 	helpModel.ShowAll = true
 	return &Model{
 		logEvent: event.New(
-			timestamp.New(
-				"Timestamps",
-				false,
-			),
-			message.New(
-				"Log Messages",
-				"...",
-			),
+			timestamp.New("Timestamps"),
+			message.New("Log Messages", "..."),
 			helpModel,
 		),
 		logGroup: group.New(

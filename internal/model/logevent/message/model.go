@@ -11,8 +11,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"clviewer/internal/commands"
 )
 
 const useHighPerformanceRenderer = false
@@ -73,15 +71,15 @@ type LoadMoreEventsMsg struct {
 	Collapsed    bool
 }
 
-type ResetMsg struct{}
-
 type ToggleCollapsedMsg struct {
 	ToggleAll bool
 }
 
-type NextEventMsg struct{}
+type ResetMsg struct{}
 
-type PrevEventMsg struct{}
+type NextEventMsg struct{ Index int }
+
+type PrevEventMsg struct{ Index int }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
@@ -101,7 +99,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if !m.Ready {
 			m.Viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.Viewport.HighPerformanceRendering = useHighPerformanceRenderer
-			m.Viewport.SetContent(m.Events)
 			m.Ready = true
 		} else {
 			m.Viewport.Width = msg.Width
@@ -111,31 +108,29 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if useHighPerformanceRenderer {
 			cmds = append(cmds, viewport.Sync(m.Viewport))
 		}
+		return m, tea.Batch(cmds...)
+	case ResetMsg:
+		m.messages = []message{}
 	case NextEventMsg:
-		if m.selectedEvent < len(m.messages) {
-			m.selectedEvent++
+		if m.selectedEvent < len(m.messages)-1 {
+			m.selectedEvent = msg.Index
 			m.centerViewOnItem()
 		}
-		return m, nil
 	case PrevEventMsg:
 		if m.selectedEvent > 0 {
-			m.selectedEvent--
+			m.selectedEvent = msg.Index
 			m.centerViewOnItem()
 		}
-		return m, nil
-	case commands.UpdateViewPortContentMsg:
-		m.Viewport.SetContent(m.FormatList(msg.Content))
-		m.centerViewOnItem()
-		return m, nil
 	case LoadMoreEventsMsg:
-		m.messages = eventsToMessages(msg.AwsLogEvents, msg.Collapsed)
-		m.Viewport.SetContent(m.renderContent())
-		return m, nil
+		m.messages = append(
+			m.messages,
+			eventsToMessages(msg.AwsLogEvents, msg.Collapsed)...,
+		)
 	case ToggleCollapsedMsg:
 		// Toggle one item
 		if !msg.ToggleAll {
 			m.messages[m.selectedEvent].collapsed = !m.messages[m.selectedEvent].collapsed
-			return m, nil
+			break
 		}
 
 		{ // Toggle all Items
@@ -152,12 +147,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.messages[k].collapsed = collapseItems
 			}
 
-			m.Viewport.SetContent(m.renderContent())
 		}
-		return m, nil
 	}
 
-	// Handle keyboard and mouse events in the viewport
+	m.Viewport.SetContent(m.renderContent())
 	m.Viewport, cmd = m.Viewport.Update(msg)
 	cmds = append(cmds, cmd)
 

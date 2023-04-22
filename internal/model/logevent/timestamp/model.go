@@ -5,8 +5,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"clviewer/internal/cloudwatch/event"
 )
 
 var (
@@ -25,10 +23,26 @@ var (
 )
 
 type Model struct {
-	List           list.Model
-	Choice         string
-	CollapseAll    bool
-	eventPaginator *event.Paginator
+	List list.Model
+}
+
+func New(
+	title string,
+) Model {
+	eventList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
+
+	eventList.SetShowStatusBar(false)
+	eventList.SetFilteringEnabled(true)
+	eventList.SetShowHelp(false)
+
+	eventList.Title = title
+	eventList.Styles.Title = titleStyle
+	eventList.Styles.PaginationStyle = paginationStyle
+	eventList.Styles.HelpStyle = helpStyle
+
+	return Model{
+		List: eventList,
+	}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -60,7 +74,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			logEventsToItemList(msg)...,
 		))
 	case ResetMsg:
-		m.List.Update([]list.Item{})
+		m.List.SetItems([]list.Item{})
 	case NextEventMsg:
 		m.List.CursorDown()
 	case PrevEventMsg:

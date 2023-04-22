@@ -160,17 +160,27 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch keypress := msg.String(); keypress {
-	case "J", "down":
-		m.Messages, cmd = m.Messages.Update(message.NextEventMsg{})
+	case "J", "shift+down":
+		m.selectedEvent += 1
+		m.Messages, cmd = m.Messages.Update(message.NextEventMsg{
+			Index: m.selectedEvent,
+		})
 		cmds = append(cmds, cmd)
+
 		m.Timestamp, cmd = m.Timestamp.Update(timestamp.NextEventMsg{})
 		cmds = append(cmds, cmd)
+
 		return m, cmd
-	case "K", "up":
-		m.Messages, cmd = m.Messages.Update(message.PrevEventMsg{})
+	case "K", "shift+up":
+		m.selectedEvent -= 1
+		m.Messages, cmd = m.Messages.Update(message.PrevEventMsg{
+			Index: m.selectedEvent,
+		})
 		cmds = append(cmds, cmd)
+
 		m.Timestamp, cmd = m.Timestamp.Update(timestamp.PrevEventMsg{})
 		cmds = append(cmds, cmd)
+
 		return m, cmd
 	case "enter":
 		m.Messages, cmd = m.Messages.Update(
@@ -184,8 +194,8 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 		return m, cmd
 	case "L":
 		return m, m.loadMoreEvents()
-	case "/":
-		m.Timestamp, cmd = m.Timestamp.Update(msg)
+	case "h", "j", "k", "l", "up", "down", "left", "right":
+		m.Messages, cmd = m.Messages.Update(msg)
 		return m, cmd
 	default:
 		m.Timestamp, cmd = m.Timestamp.Update(msg)
