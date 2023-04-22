@@ -39,12 +39,12 @@ var (
 )
 
 type Model struct {
-	Title    string
-	Events   string
-	Ready    bool
-	Viewport viewport.Model
-	messages []message
-	index    int
+	Title         string
+	Events        string
+	Ready         bool
+	Viewport      viewport.Model
+	messages      []message
+	selectedEvent int
 }
 
 type message struct {
@@ -55,10 +55,12 @@ type message struct {
 
 func New(title string, events string) Model {
 	return Model{
-		Title:    title,
-		Events:   events,
-		Ready:    false,
-		Viewport: viewport.Model{},
+		Title:         title,
+		Events:        events,
+		Ready:         false,
+		Viewport:      viewport.Model{},
+		messages:      []message{},
+		selectedEvent: 0,
 	}
 }
 
@@ -73,7 +75,13 @@ type LoadMoreEventsMsg struct {
 
 type ResetMsg struct{}
 
-type ToggleCollapsedMsg struct{}
+type ToggleCollapsedMsg struct {
+	ToggleAll bool
+}
+
+type NextEventMsg struct{}
+
+type PrevEventMsg struct{}
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
@@ -103,31 +111,49 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if useHighPerformanceRenderer {
 			cmds = append(cmds, viewport.Sync(m.Viewport))
 		}
+	case NextEventMsg:
+		if m.selectedEvent < len(m.messages) {
+			m.selectedEvent++
+			m.centerViewOnItem()
+		}
+		return m, nil
+	case PrevEventMsg:
+		if m.selectedEvent > 0 {
+			m.selectedEvent--
+			m.centerViewOnItem()
+		}
+		return m, nil
 	case commands.UpdateViewPortContentMsg:
 		m.Viewport.SetContent(m.FormatList(msg.Content))
-		// Center selected item in the viewport
-		// TODO add updateViewPort and viewport scroll msg
-		m.Viewport.SetYOffset(max(0, msg.YOffset-(m.Viewport.Height/2)))
+		m.centerViewOnItem()
 		return m, nil
 	case LoadMoreEventsMsg:
 		m.messages = eventsToMessages(msg.AwsLogEvents, msg.Collapsed)
 		m.Viewport.SetContent(m.renderContent())
 		return m, nil
 	case ToggleCollapsedMsg:
-		collapseItems := true
+		// Toggle one item
+		if !msg.ToggleAll {
+			m.messages[m.selectedEvent].collapsed = !m.messages[m.selectedEvent].collapsed
+			return m, nil
+		}
 
-		// if any are collapsed then don't set all to collapsed
-		for k := range m.messages {
-			if m.messages[k].collapsed {
-				collapseItems = false
-				break
+		{ // Toggle all Items
+			collapseItems := true
+
+			// if any are collapsed then don't set all to collapsed
+			for k := range m.messages {
+				if m.messages[k].collapsed {
+					collapseItems = false
+					break
+				}
 			}
-		}
-		for k := range m.messages {
-			m.messages[k].collapsed = collapseItems
-		}
+			for k := range m.messages {
+				m.messages[k].collapsed = collapseItems
+			}
 
-		m.Viewport.SetContent(m.renderContent())
+			m.Viewport.SetContent(m.renderContent())
+		}
 		return m, nil
 	}
 
@@ -136,16 +162,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
-}
-
-func (m Model) FormatList(list []string) string {
-	var str string
-	for _, msg := range list {
-		str += msg + "\n"
-	}
-	return lipgloss.NewStyle().
-		PaddingLeft(2).
-		Render(str)
 }
 
 func (m Model) View() string {
@@ -177,6 +193,13 @@ func (m Model) footerView() string {
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
 
+func (m *Model) centerViewOnItem() {
+	m.Viewport.SetYOffset(max(
+		0,
+		m.messages[m.selectedEvent].lineNumber-(m.Viewport.Height/2),
+	))
+}
+
 func max(a, b int) int {
 	if a > b {
 		return a
@@ -193,7 +216,7 @@ func (m *Model) renderContent() string {
 			!event.collapsed,
 		)
 
-		if m.index == i {
+		if m.selectedEvent == i {
 			content += selectedItemStyleViewPort.Render(formattedItem) + "\n"
 		} else {
 			content += formattedItem + "\n"
@@ -203,6 +226,16 @@ func (m *Model) renderContent() string {
 		m.messages[i].lineNumber = lipgloss.Height(formattedItem)
 	}
 	return content
+}
+
+func (m Model) FormatList(list []string) string {
+	var str string
+	for _, msg := range list {
+		str += msg + "\n"
+	}
+	return lipgloss.NewStyle().
+		PaddingLeft(2).
+		Render(str)
 }
 
 func FormatMessage(in string, formatAsJson bool) string {

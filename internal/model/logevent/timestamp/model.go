@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"clviewer/internal/cloudwatch/event"
-	"clviewer/internal/commands"
 )
 
 var (
@@ -23,8 +22,6 @@ var (
 	paginationStyle   = list.DefaultStyles().PaginationStyle
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-
-	selectedItemStyleViewPort = lipgloss.NewStyle().Foreground(lipgloss.Color("127"))
 )
 
 type Model struct {
@@ -41,6 +38,10 @@ func (m Model) Init() tea.Cmd {
 type LoadMoreEventsMsg []types.OutputLogEvent
 
 type ResetMsg struct{}
+
+type NextEventMsg struct{}
+
+type PrevEventMsg struct{}
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -60,6 +61,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		))
 	case ResetMsg:
 		m.List.Update([]list.Item{})
+	case NextEventMsg:
+		m.List.CursorDown()
+	case PrevEventMsg:
+		m.List.CursorUp()
 	}
 
 	m.List, cmd = m.List.Update(msg)
@@ -78,79 +83,11 @@ func (m Model) updateKeyMsg(msg tea.KeyMsg) (Model, tea.Cmd) {
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
-	index := m.List.Index()
 	switch keypress := msg.String(); keypress {
-	// Toggle Collapse on Item
-	case "enter":
-		item, ok := m.List.SelectedItem().(Item)
-		if ok {
-			m.Choice = item.Message
-		}
-		m.ItemMetaData[index].Collapsed = !m.ItemMetaData[index].Collapsed
-		cmd = commands.UpdateViewPort(
-			m.getItemListAsStringArray(),
-			m.ItemMetaData[index].lineNum,
-		)
-		return m, cmd
-	// Toggle Collapse all
-	case "J":
-		m.List.CursorDown()
-		cmd = commands.UpdateViewPort(
-			m.getItemListAsStringArray(),
-			m.getLineNumber(),
-		)
-		return m, cmd
-	case "K":
-		m.List.CursorUp()
-		cmd = commands.UpdateViewPort(
-			m.getItemListAsStringArray(),
-			m.getLineNumber(),
-		)
-		return m, cmd
 	// all other keystrokes get handled by the list Model
-	// and then the viewport gets updated
 	default:
 		m.List, cmd = m.List.Update(msg)
 		cmds = append(cmds, cmd)
-
-		cmd = commands.UpdateViewPort(
-			m.getItemListAsStringArray(),
-			m.getLineNumber(),
-		)
-		cmds = append(cmds, cmd)
-
 		return m, tea.Batch(cmds...)
 	}
-
-}
-
-func (m *Model) getItemListAsStringArray() []string {
-	var list []string
-	height := 0
-
-	for index, item := range m.List.Items() {
-		// TODO do I need to format this?
-		formattedItem := FormatMessage(
-			item.FilterValue(),
-			!m.ItemMetaData[index].Collapsed,
-		)
-
-		if m.List.Index() == index {
-			list = append(list, selectedItemStyleViewPort.Render(formattedItem))
-		} else {
-			list = append(list, formattedItem)
-		}
-
-		height += lipgloss.Height(formattedItem)
-		m.ItemMetaData[index].lineNum = height
-	}
-	return list
-}
-
-func (m Model) getLineNumber() int {
-	lineNum := 0
-	if len(m.ItemMetaData) > m.List.Index()+1 {
-		lineNum = m.ItemMetaData[m.List.Index()].lineNum
-	}
-	return lineNum
 }

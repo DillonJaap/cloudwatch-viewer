@@ -33,6 +33,7 @@ type Model struct {
 	eventPaginator *event.Paginator
 	selectedGroup  string
 	selectedStream string
+	selectedEvent  int
 	help           help.Model
 }
 
@@ -40,8 +41,10 @@ func New(timestampe timestamp.Model, msg message.Model, help help.Model) Model {
 	return Model{
 		Timestamp:      timestampe,
 		Messages:       message.Model{},
+		eventPaginator: nil,
 		selectedGroup:  "",
 		selectedStream: "",
+		selectedEvent:  0,
 		help:           help,
 	}
 }
@@ -154,26 +157,40 @@ func (m Model) handleUpdateWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 
 func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch keypress := msg.String(); keypress {
-	case "L":
-		return m, m.loadMoreEvents()
-	case "enter":
-	case "H", "J", "K", "/":
-		m.Timestamp, cmd = m.Timestamp.Update(msg)
+	case "J", "down":
+		m.Messages, cmd = m.Messages.Update(message.NextEventMsg{})
+		cmds = append(cmds, cmd)
+		m.Timestamp, cmd = m.Timestamp.Update(timestamp.NextEventMsg{})
+		cmds = append(cmds, cmd)
 		return m, cmd
-	case "c":
-		m.toggleCollapseAll()
-		cmd = commands.UpdateViewPort(
-			m.getItemListAsStringArray(),
-			m.ItemMetaData[index].lineNum,
+	case "K", "up":
+		m.Messages, cmd = m.Messages.Update(message.PrevEventMsg{})
+		cmds = append(cmds, cmd)
+		m.Timestamp, cmd = m.Timestamp.Update(timestamp.PrevEventMsg{})
+		cmds = append(cmds, cmd)
+		return m, cmd
+	case "enter":
+		m.Messages, cmd = m.Messages.Update(
+			message.ToggleCollapsedMsg{ToggleAll: false},
 		)
 		return m, cmd
+	case "c":
+		m.Messages, cmd = m.Messages.Update(
+			message.ToggleCollapsedMsg{ToggleAll: true},
+		)
+		return m, cmd
+	case "L":
+		return m, m.loadMoreEvents()
+	case "/":
+		m.Timestamp, cmd = m.Timestamp.Update(msg)
+		return m, cmd
 	default:
-		m.Messages, cmd = m.Messages.Update(msg)
+		m.Timestamp, cmd = m.Timestamp.Update(msg)
 		return m, cmd
 	}
-	return m, nil
 }
 
 func (m *Model) loadMoreEvents() tea.Cmd {
