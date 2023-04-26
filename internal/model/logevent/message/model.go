@@ -92,12 +92,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "J" || msg.String() == "shift+down" {
-			m.Viewport.LineDown(1)
+			m.Viewport.LineDown(3)
 		}
 		if msg.String() == "K" || msg.String() == "shift+up" {
 			m.Viewport.LineUp(3)
 		}
-		log.Println(msg.String())
 		m.Viewport, cmd = m.Viewport.Update(msg)
 	case tea.WindowSizeMsg:
 		headerHeight := lipgloss.Height(m.headerView())

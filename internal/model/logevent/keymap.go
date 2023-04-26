@@ -94,8 +94,8 @@ var keys = keyMap{
 		key.WithHelp("spacebar", "toggle collapse"),
 	),
 	CollapseAll: key.NewBinding(
-		key.WithKeys("shift+space"),
-		key.WithHelp("shift+spacebar", "toggle collapse all"),
+		key.WithKeys("C"),
+		key.WithHelp("C", "toggle collapse all"),
 	),
 	NextWindow: key.NewBinding(
 		key.WithKeys("tab"),

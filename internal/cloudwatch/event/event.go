@@ -27,6 +27,20 @@ func New(
 
 	cw := cloudwatchlogs.NewFromConfig(cfg)
 
+	cw.FilterLogEvents(ctx, &cloudwatchlogs.FilterLogEventsInput{
+		EndTime:             new(int64),
+		FilterPattern:       new(string),
+		Interleaved:         new(bool),
+		Limit:               new(int32),
+		LogGroupIdentifier:  new(string),
+		LogGroupName:        new(string),
+		LogStreamNamePrefix: new(string),
+		LogStreamNames:      []string{},
+		NextToken:           new(string),
+		StartTime:           new(int64),
+		Unmask:              false,
+	})
+	//cloudwatchlogs.NewFilterLogEventsPaginator()
 	// get log events paginator
 	eventsPaginator := cloudwatchlogs.NewGetLogEventsPaginator(
 		cw,
