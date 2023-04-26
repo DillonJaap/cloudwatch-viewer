@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -31,21 +32,25 @@ type Model struct {
 	Timestamp      timestamp.Model
 	Messages       message.Model
 	eventPaginator *event.Paginator
+	numberOfEvents int
 	selectedGroup  string
 	selectedStream string
 	selectedEvent  int
 	help           help.Model
 }
 
-func New(timestampe timestamp.Model, msg message.Model, help help.Model) Model {
+func New(timestampe timestamp.Model, msg message.Model) Model {
+	helpModel := help.New()
+	helpModel.ShowAll = true
 	return Model{
 		Timestamp:      timestampe,
 		Messages:       message.Model{},
 		eventPaginator: nil,
+		numberOfEvents: 0,
 		selectedGroup:  "",
 		selectedStream: "",
 		selectedEvent:  0,
-		help:           help,
+		help:           helpModel,
 	}
 }
 
@@ -78,6 +83,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.eventPaginator = &paginator
 
 		{ // reset data
+			m.numberOfEvents = 0
 			m.Timestamp, cmd = m.Timestamp.Update(timestamp.ResetMsg{})
 			cmds = append(cmds, cmd)
 			m.Messages, cmd = m.Messages.Update(message.ResetMsg{})
@@ -117,14 +123,6 @@ func (m Model) View() string {
 		),
 	)
 
-	helpView := m.help.View(keys)
-
-	logEventView = lipgloss.JoinVertical(
-		lipgloss.Center,
-		logEventView,
-		helpView,
-	)
-
 	return logEventView
 }
 
@@ -133,9 +131,8 @@ func (m Model) handleUpdateWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	const statusBarHeight = 4
-	const helpHeight = 2
 
-	height := msg.Height - statusBarHeight - helpHeight
+	height := msg.Height - statusBarHeight
 
 	timestampWidth := int(float32(msg.Width) / 3.0)
 	messageWidth := msg.Width - timestampWidth
@@ -159,8 +156,11 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	switch keypress := msg.String(); keypress {
-	case "J", "shift+down":
+	switch {
+	case key.Matches(msg, keys.NextItem):
+		if m.numberOfEvents-1 <= m.selectedEvent {
+			return m, nil
+		}
 		m.selectedEvent += 1
 		m.Messages, cmd = m.Messages.Update(message.NextEventMsg{
 			Index: m.selectedEvent,
@@ -171,7 +171,10 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		return m, cmd
-	case "K", "shift+up":
+	case key.Matches(msg, keys.PrevItem):
+		if m.selectedEvent <= 0 {
+			return m, nil
+		}
 		m.selectedEvent -= 1
 		m.Messages, cmd = m.Messages.Update(message.PrevEventMsg{
 			Index: m.selectedEvent,
@@ -182,19 +185,27 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		return m, cmd
-	case "enter":
+	case key.Matches(msg, keys.Collapse):
 		m.Messages, cmd = m.Messages.Update(
 			message.ToggleCollapsedMsg{ToggleAll: false},
 		)
 		return m, cmd
-	case "c":
+	case key.Matches(msg, keys.CollapseAll):
 		m.Messages, cmd = m.Messages.Update(
 			message.ToggleCollapsedMsg{ToggleAll: true},
 		)
 		return m, cmd
-	case "L":
+	case key.Matches(msg, keys.Copy):
+		m.Messages, cmd = m.Messages.Update(message.CopyMessage{})
+		return m, cmd
+	case key.Matches(msg, keys.LoadMore):
 		return m, m.loadMoreEvents()
-	case "h", "j", "k", "l", "up", "down", "left", "right":
+	case key.Matches(msg, keys.ScrollDown),
+		key.Matches(msg, keys.ScrollUp),
+		key.Matches(msg, keys.PageUp),
+		key.Matches(msg, keys.PageDown),
+		key.Matches(msg, keys.HalfPageUp),
+		key.Matches(msg, keys.HalfPageDown):
 		m.Messages, cmd = m.Messages.Update(msg)
 		return m, cmd
 	default:
@@ -215,6 +226,7 @@ func (m *Model) loadMoreEvents() tea.Cmd {
 	if events == nil {
 		return nil
 	}
+	m.numberOfEvents += len(events)
 
 	{ // update models with events
 		m.Timestamp, cmd = m.Timestamp.Update(
@@ -229,4 +241,8 @@ func (m *Model) loadMoreEvents() tea.Cmd {
 		cmds = append(cmds, cmd)
 	}
 	return tea.Batch(cmds...)
+}
+
+func (m Model) HelpView() string {
+	return m.help.View(keys)
 }

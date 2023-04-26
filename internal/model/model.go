@@ -4,7 +4,6 @@ import (
 	"context"
 	"math"
 
-	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -52,18 +51,15 @@ type Model struct {
 	logEvent  event.Model
 	logGroup  group.Model
 	logStream stream.Model
-	help      help.Model
+	helpView  string
 	selected  int
 }
 
 func New(ctx context.Context) *Model {
-	helpModel := help.New()
-	helpModel.ShowAll = true
 	return &Model{
 		logEvent: event.New(
 			timestamp.New("Timestamps"),
 			message.New("Log Messages", "..."),
-			helpModel,
 		),
 		logGroup: group.New(
 			"Log Groups",
@@ -72,7 +68,7 @@ func New(ctx context.Context) *Model {
 		logStream: stream.New(
 			"Log Streams",
 		),
-		help:     helpModel,
+		helpView: "",
 		selected: eventListSelected,
 	}
 }
@@ -86,18 +82,19 @@ func (m *Model) View() string {
 	logStreamList := m.logStream.View()
 	logEventView := m.logEvent.View()
 
-	helpView := m.help.View(keys)
-
 	switch m.selected {
 	case groupListSelected:
+		m.helpView = m.logGroup.HelpView()
 		logGroupList = selectedModelStyle.Render(logGroupList)
 		logEventView = modelStyle.Render(logEventView)
 		logStreamList = modelStyle.Render(logStreamList)
 	case streamListSelected:
+		m.helpView = m.logStream.HelpView()
 		logStreamList = selectedModelStyle.Render(logStreamList)
 		logEventView = modelStyle.Render(logEventView)
 		logGroupList = modelStyle.Render(logGroupList)
 	case eventListSelected:
+		m.helpView = m.logEvent.HelpView()
 		logEventView = selectedModelStyle.Render(logEventView)
 		logGroupList = modelStyle.Render(logGroupList)
 		logStreamList = modelStyle.Render(logStreamList)
@@ -118,7 +115,7 @@ func (m *Model) View() string {
 	return tuiBorder.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Center,
-			helpView,
+			m.helpView,
 			logListsAndEvents,
 		),
 	)
@@ -131,9 +128,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "?":
-			m.help.ShowAll = !m.help.ShowAll
-			return m, nil
 		case "tab":
 			m.selected = (m.selected + 1) % numWindows
 			return m, nil
@@ -158,7 +152,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	const borderMarginSize = 4 // subtract 4 for border
 	const tuiBorder = 2
 
-	height := msg.Height - lipgloss.Height(m.help.View(keys)) - tuiBorder
+	height := msg.Height - lipgloss.Height(m.helpView) - tuiBorder
 	width := msg.Width - tuiBorder
 
 	logGroupListWidth := int(float32(width) / 4.0)

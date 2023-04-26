@@ -33,6 +33,8 @@ type Model struct {
 	SelectedStream  string
 	currentGroup    string
 	streamPaginator *stream.Paginator
+	width           int
+	height          int
 }
 
 func New(
@@ -42,16 +44,19 @@ func New(
 
 	streamList.SetShowStatusBar(false)
 	streamList.SetFilteringEnabled(true)
-	streamList.SetShowHelp(true)
+	streamList.SetShowHelp(false)
 
 	streamList.Title = title
 	streamList.Styles.Title = titleStyle
 	streamList.Styles.PaginationStyle = paginationStyle
 
 	return Model{
-		List:           streamList,
-		SelectedStream: "",
-		currentGroup:   "",
+		List:            streamList,
+		SelectedStream:  "",
+		currentGroup:    "",
+		streamPaginator: &stream.Paginator{},
+		width:           0,
+		height:          0,
 	}
 }
 
@@ -67,8 +72,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.List.SetWidth(msg.Width)
-		m.List.SetHeight(msg.Height)
+		// TODO make other components also have independent height/width feilds
+		m.width = msg.Width
+		m.height = msg.Height
+		m.List.SetWidth(m.width)
+		m.List.SetHeight(m.height)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -90,6 +98,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
+	m.List.SetWidth(m.width)
+	m.List.SetHeight(m.height)
 	m.List, cmd = m.List.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -132,4 +142,8 @@ func (m Model) UpdateStreamItems(groupName string) (Model, tea.Cmd) {
 	// itemList := GetLogStreamsAsItemList(groupPattern)
 	// return m.List.SetItems(itemList)
 	return m, m.loadMoreStreams()
+}
+
+func (m Model) HelpView() string {
+	return m.List.Styles.HelpStyle.Render(m.List.Help.View(m.List))
 }

@@ -41,7 +41,7 @@ func New(
 
 	groupList.SetShowStatusBar(false)
 	groupList.SetFilteringEnabled(true)
-	groupList.SetShowHelp(true)
+	groupList.SetShowHelp(false)
 
 	groupList.Title = title
 	groupList.Styles.Title = titleStyle
@@ -85,4 +85,8 @@ func (m Model) View() string {
 	return lipgloss.NewStyle().
 		PaddingRight(m.List.Width() - lipgloss.Width(m.List.View())).
 		Render(m.List.View())
+}
+
+func (m Model) HelpView() string {
+	return m.List.Styles.HelpStyle.Render(m.List.Help.View(m.List))
 }

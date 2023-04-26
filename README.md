@@ -6,33 +6,37 @@
 - [ ] add saved searches
 - [x] paginate log events
 - [ ] paginate log Streams
-- [ ] fix filter spacing
+- [x] fix filter spacing
 - [x] fix json formatting
-- [ ] create unified help menu
+- [x] create unified help menu
 - [x] do the Update() methods have to return tea.Model, or can they return their own model?
 - [x] can see event messages as soon as tui loads
 - [ ] add styles module
-- [ ] refactor getItemListAsString() so that it is an array of strings, and so it only needs to be called once
+- [x] ~~refactor getItemListAsString() so that it is an array of strings, and so it only needs to be called once~~
 - [ ] add refresh button
 - [x] add collapse/expand all
 - [ ] add sane defaults for log group / stream values
 - [x] fix empty list panic
 - [ ] fix collapse all behavior so that it collapses if any item is open
-- [ ] add sane defaults for sorting
+- [x] add sane defaults for sorting
 - [ ] add ability to chose sorting method
 - [ ] add loading status to ui
 - [x] display the currently selected log group & stream in ui
 - [ ] improve updateViewPort logic
 - [ ] reset list cursor when new data loads
 - [ ] custom keybindings
-- [ ] refactor code - group related models - use more composition - simplify spacing between views 
 - [ ] proper filtering for messages / add search for messages viewport
 - [x] viewport scroll (vertical)
 - [ ] viewport scroll (horizontal)
-- [ ] viewport copy message keybind
+- [x] viewport copy message keybind
 - [ ] add last event time to logstream list (change list into table?)
 - [ ] clean up log.fatal() figure out a better way to handle it
 - [ ] use terminal colors
 - [ ] add seperator for help items
+- [ ] fix styling for help menus so they are limited to 2 - 3 lines
+- [ ] default to show full help
+- [ ] add short and long help functions to logevents menu
+- [ ] and tea.Msg to update windows sizes on certain events
 
 - [ ] clean up code & add comments & clean up TODOs
+- [ ] refactor code - group related models - use more composition - simplify spacing between views 

@@ -99,3 +99,115 @@ debug 2023/04/19 21:28:10 0
 debug 2023/04/19 21:29:30 0
 debug 2023/04/20 12:10:38 0
 debug 2023/04/20 12:12:02 0
+debug 2023/04/21 20:44:17 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: c83f09d8-9dbf-4fc4-9be3-3283f993ea4c, api error ThrottlingException: Rate exceeded
+debug 2023/04/21 21:27:41 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: e8511b76-075c-48d7-b7a5-f415777c8cad, api error ThrottlingException: Rate exceeded
+debug 2023/04/21 21:27:52 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: f9ea3ec4-8341-43e5-806d-8e9dbfe16b46, api error ThrottlingException: Rate exceeded
+debug 2023/04/24 13:35:02 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: 7e9bb835-6086-439b-abb4-9f1af949d0bc, api error ThrottlingException: Rate exceeded
+debug 2023/04/24 13:59:54 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: d8c05dbb-b9d9-43a3-b098-b9a6cf40cb8c, api error ThrottlingException: Rate exceeded
+debug 2023/04/24 14:00:11 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: ef0582fa-ef68-4728-9c9f-7f4f2442b94d, api error ThrottlingException: Rate exceeded
+debug 2023/04/25 10:43:18 operation error CloudWatch Logs: DescribeLogStreams, https response error StatusCode: 400, RequestID: 31beae38-8a5b-4f42-8c63-056e58924696, api error ExpiredTokenException: The security token included in the request is expired
+debug 2023/04/25 11:35:19 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: 5510cede-37a7-4186-a496-a6076ed3c6fe, api error ThrottlingException: Rate exceeded
+debug 2023/04/25 11:35:30 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: efbc22c6-e6d4-4dea-9180-af9a89669794, api error ThrottlingException: Rate exceeded
+debug 2023/04/25 11:44:19 K
+debug 2023/04/25 11:44:19 K
+debug 2023/04/25 11:44:19 K
+debug 2023/04/25 11:44:20 K
+debug 2023/04/25 11:44:20 K
+debug 2023/04/25 11:44:21 K
+debug 2023/04/25 11:44:22 K
+debug 2023/04/25 11:44:22 K
+debug 2023/04/25 11:44:22 K
+debug 2023/04/25 11:44:32 K
+debug 2023/04/25 11:44:33 K
+debug 2023/04/25 11:44:33 K
+debug 2023/04/25 11:51:10 operation error CloudWatch Logs: DescribeLogStreams, exceeded maximum number of attempts, 3, https response error StatusCode: 400, RequestID: b49719f0-ec05-41da-83d8-cca46ce17785, api error ThrottlingException: Rate exceeded
+debug 2023/04/25 12:07:59 K
+debug 2023/04/25 12:07:59 K
+debug 2023/04/25 12:07:59 K
+debug 2023/04/26 16:18:28 K
+debug 2023/04/26 16:18:29 K
+debug 2023/04/26 16:18:29 K
+debug 2023/04/26 16:18:29 K
+debug 2023/04/26 16:18:31 K
+debug 2023/04/26 16:18:32 K
+debug 2023/04/26 16:18:32 K
+debug 2023/04/26 16:18:32 K
+debug 2023/04/26 16:18:33 K
+debug 2023/04/26 16:18:33 K
+debug 2023/04/26 16:18:37 K
+debug 2023/04/26 16:18:37 K
+debug 2023/04/26 16:18:38 K
+debug 2023/04/26 16:18:38 K
+debug 2023/04/26 16:18:39 K
+debug 2023/04/26 16:18:39 K
+debug 2023/04/26 16:18:40 K
+debug 2023/04/26 16:18:40 K
+debug 2023/04/26 16:18:41 K
+debug 2023/04/26 16:21:13 J
+debug 2023/04/26 16:21:14 J
+debug 2023/04/26 16:21:14 J
+debug 2023/04/26 16:21:14 J
+debug 2023/04/26 16:21:14 J
+debug 2023/04/26 16:21:14 J
+debug 2023/04/26 16:21:15 J
+debug 2023/04/26 16:21:15 J
+debug 2023/04/26 16:21:15 J
+debug 2023/04/26 16:21:15 K
+debug 2023/04/26 16:21:16 K
+debug 2023/04/26 16:21:16 K
+debug 2023/04/26 16:21:16 K
+debug 2023/04/26 16:21:16 J
+debug 2023/04/26 16:21:16 J
+debug 2023/04/26 16:21:17 J
+debug 2023/04/26 16:21:17 J
+debug 2023/04/26 16:21:17 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 J
+debug 2023/04/26 16:21:18 K
+debug 2023/04/26 16:21:19 K
+debug 2023/04/26 16:21:19 K
+debug 2023/04/26 16:21:19 K
+debug 2023/04/26 16:21:19 J
+debug 2023/04/26 16:21:19 J
+debug 2023/04/26 16:21:20 J
+debug 2023/04/26 16:21:20 J
+debug 2023/04/26 16:21:20 J
+debug 2023/04/26 16:21:20 J
+debug 2023/04/26 16:21:20 J
+debug 2023/04/26 16:21:21 J
+debug 2023/04/26 16:21:21 J
+debug 2023/04/26 16:21:21 J
+debug 2023/04/26 16:30:02 J
+debug 2023/04/26 16:30:03 J
+debug 2023/04/26 16:30:03 J
+debug 2023/04/26 16:30:03 J
+debug 2023/04/26 16:30:03 K
+debug 2023/04/26 16:30:03 K
+debug 2023/04/26 16:30:06 K
+debug 2023/04/26 16:30:06 K
+debug 2023/04/26 16:30:06 K
+debug 2023/04/26 16:30:06 K
+debug 2023/04/26 16:30:06 K
+debug 2023/04/26 16:30:07 K
+debug 2023/04/26 16:30:07 K
+debug 2023/04/26 16:30:07 K
+debug 2023/04/26 16:30:07 K
+debug 2023/04/26 16:30:07 K
+debug 2023/04/26 16:30:08 J
+debug 2023/04/26 16:30:08 J
+debug 2023/04/26 16:30:08 J
+debug 2023/04/26 16:30:11 pgdown
+debug 2023/04/26 16:30:11 pgup
+debug 2023/04/26 16:30:12 pgup
+debug 2023/04/26 16:30:12 pgdown
+debug 2023/04/26 16:30:13 ctrl+u
+debug 2023/04/26 16:30:14 ctrl+u
+debug 2023/04/26 16:30:14 ctrl+d
+debug 2023/04/26 16:30:14 ctrl+d
+debug 2023/04/26 16:31:40 J

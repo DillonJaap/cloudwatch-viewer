@@ -16,7 +16,10 @@ type Paginator struct {
 	eventsPaginator *cloudwatchlogs.GetLogEventsPaginator
 }
 
-func New(ctx context.Context, logGroupPattern, logStreamPrefix string) Paginator {
+func New(
+	ctx context.Context,
+	logGroupName, logStreamName, filterPattern string,
+) Paginator {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -24,34 +27,13 @@ func New(ctx context.Context, logGroupPattern, logStreamPrefix string) Paginator
 
 	cw := cloudwatchlogs.NewFromConfig(cfg)
 
-	// get log groups
-	logGroupsOutput, err := cw.DescribeLogGroups(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-		LogGroupNamePattern: aws.String(logGroupPattern),
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// get log streams
-	logGroupName := logGroupsOutput.LogGroups[0].LogGroupName
-	logStreamsOutput, err := cw.DescribeLogStreams(ctx, &cloudwatchlogs.DescribeLogStreamsInput{
-		Limit:               aws.Int32(1),
-		LogGroupIdentifier:  logGroupName,
-		LogStreamNamePrefix: aws.String(logStreamPrefix),
-		Descending:          aws.Bool(true),
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// get log events paginator
-	logStreamName := logStreamsOutput.LogStreams[0].LogStreamName
 	eventsPaginator := cloudwatchlogs.NewGetLogEventsPaginator(
 		cw,
 		&cloudwatchlogs.GetLogEventsInput{
-			LogStreamName: logStreamName,
-			LogGroupName:  logGroupName,
-			Limit:         aws.Int32(50),
+			Limit:         aws.Int32(200),
+			LogStreamName: aws.String(logStreamName),
+			LogGroupName:  aws.String(logGroupName),
 			StartFromHead: aws.Bool(true),
 		},
 	)
@@ -60,8 +42,8 @@ func New(ctx context.Context, logGroupPattern, logStreamPrefix string) Paginator
 	}
 
 	return Paginator{
-		logGroup:        logGroupPattern,
-		logStream:       logStreamPrefix,
+		logGroup:        logGroupName,
+		logStream:       logStreamName,
 		eventsPaginator: eventsPaginator,
 	}
 }

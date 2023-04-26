@@ -2,19 +2,28 @@ package logevent
 
 import "github.com/charmbracelet/bubbles/key"
 
+const spacebar = " "
+
 type keyMap struct {
-	Up          key.Binding
-	Down        key.Binding
-	Left        key.Binding
-	Right       key.Binding
-	Help        key.Binding
-	Quit        key.Binding
-	Filter      key.Binding
-	LoadMore    key.Binding
-	Collapse    key.Binding
-	CollapseAll key.Binding
-	NextWindow  key.Binding
-	PrevWindow  key.Binding
+	PrevItem     key.Binding
+	NextItem     key.Binding
+	ScrollUp     key.Binding
+	ScrollDown   key.Binding
+	Left         key.Binding
+	Right        key.Binding
+	Help         key.Binding
+	Quit         key.Binding
+	Filter       key.Binding
+	LoadMore     key.Binding
+	Collapse     key.Binding
+	CollapseAll  key.Binding
+	NextWindow   key.Binding
+	PrevWindow   key.Binding
+	Copy         key.Binding
+	PageDown     key.Binding
+	PageUp       key.Binding
+	HalfPageUp   key.Binding
+	HalfPageDown key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -23,23 +32,34 @@ func (k keyMap) ShortHelp() []key.Binding {
 
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down},
-		{k.Left, k.Right},
-		{k.Collapse, k.CollapseAll},
-		{k.Filter, k.LoadMore},
-		{k.NextWindow, k.PrevWindow},
 		{k.Help, k.Quit},
+		{k.NextWindow, k.PrevWindow},
+		{k.PrevItem, k.NextItem},
+		{k.ScrollUp, k.ScrollDown},
+		{k.PageUp, k.PageDown},
+		{k.HalfPageUp, k.HalfPageDown},
+		{k.Collapse, k.CollapseAll},
+		{k.Filter, k.Copy},
+		{k.LoadMore},
 	}
 }
 
 var keys = keyMap{
-	Up: key.NewBinding(
+	PrevItem: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "next item"),
 	),
-	Down: key.NewBinding(
+	NextItem: key.NewBinding(
 		key.WithKeys("down", "j"),
 		key.WithHelp("↓/j", "prev item"),
+	),
+	ScrollUp: key.NewBinding(
+		key.WithKeys("shift+up", "K"),
+		key.WithHelp("shift+↑/K", "scroll up"),
+	),
+	ScrollDown: key.NewBinding(
+		key.WithKeys("shift+down", "J"),
+		key.WithHelp("shift+↓/J", "scroll down"),
 	),
 	Left: key.NewBinding(
 		key.WithKeys("left", "h"),
@@ -65,13 +85,17 @@ var keys = keyMap{
 		key.WithKeys("L"),
 		key.WithHelp("L", "load more events"),
 	),
+	Copy: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "copy"),
+	),
 	Collapse: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("enter", "toggle collapse"),
+		key.WithKeys(spacebar),
+		key.WithHelp("spacebar", "toggle collapse"),
 	),
 	CollapseAll: key.NewBinding(
-		key.WithKeys("c"),
-		key.WithHelp("c", "toggle collapse all"),
+		key.WithKeys("shift+space"),
+		key.WithHelp("shift+spacebar", "toggle collapse all"),
 	),
 	NextWindow: key.NewBinding(
 		key.WithKeys("tab"),
@@ -80,5 +104,21 @@ var keys = keyMap{
 	PrevWindow: key.NewBinding(
 		key.WithKeys("shift+tab"),
 		key.WithHelp("shift+tab", "prev window"),
+	),
+	PageDown: key.NewBinding(
+		key.WithKeys("pgdown"),
+		key.WithHelp("f/pgdn", "page down"),
+	),
+	PageUp: key.NewBinding(
+		key.WithKeys("pgup"),
+		key.WithHelp("b/pgup", "page up"),
+	),
+	HalfPageUp: key.NewBinding(
+		key.WithKeys("u", "ctrl+u"),
+		key.WithHelp("u", "½ page up"),
+	),
+	HalfPageDown: key.NewBinding(
+		key.WithKeys("d", "ctrl+d"),
+		key.WithHelp("d", "½ page down"),
 	),
 }

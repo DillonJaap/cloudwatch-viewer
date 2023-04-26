@@ -3,9 +3,11 @@ package message
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/TylerBrock/colorjson"
+	"github.com/atotto/clipboard"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -32,8 +34,6 @@ var (
 	}()
 
 	lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("98"))
-
-	selectedItemStyleViewPort = lipgloss.NewStyle().Foreground(lipgloss.Color("127"))
 )
 
 type Model struct {
@@ -81,6 +81,8 @@ type NextEventMsg struct{ Index int }
 
 type PrevEventMsg struct{ Index int }
 
+type CopyMessage struct{}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
@@ -89,8 +91,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if msg.String() == "J" || msg.String() == "shift+down" {
+			m.Viewport.LineDown(1)
+		}
+		if msg.String() == "K" || msg.String() == "shift+up" {
+			m.Viewport.LineUp(3)
+		}
+		log.Println(msg.String())
 		m.Viewport, cmd = m.Viewport.Update(msg)
-		return m, nil
 	case tea.WindowSizeMsg:
 		headerHeight := lipgloss.Height(m.headerView())
 		footerHeight := lipgloss.Height(m.footerView())
@@ -110,23 +118,30 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		return m, tea.Batch(cmds...)
 	case ResetMsg:
+		m.selectedEvent = 0
 		m.messages = []message{}
 	case NextEventMsg:
-		if m.selectedEvent < len(m.messages)-1 {
-			m.selectedEvent = msg.Index
-			m.centerViewOnItem()
-		}
+		m.selectedEvent = msg.Index
+		m.centerViewOnItem()
 	case PrevEventMsg:
-		if m.selectedEvent > 0 {
-			m.selectedEvent = msg.Index
-			m.centerViewOnItem()
-		}
+		m.selectedEvent = msg.Index
+		m.centerViewOnItem()
 	case LoadMoreEventsMsg:
 		m.messages = append(
 			m.messages,
 			eventsToMessages(msg.AwsLogEvents, msg.Collapsed)...,
 		)
+	case CopyMessage:
+		if err := clipboard.WriteAll(m.messages[m.selectedEvent].content); err != nil {
+			log.Printf("error with clipboard: %s", err)
+		}
+		return m, nil
 	case ToggleCollapsedMsg:
+		// break if no messages have been set
+		if len(m.messages) == 0 {
+			break
+		}
+
 		// Toggle one item
 		if !msg.ToggleAll {
 			m.messages[m.selectedEvent].collapsed = !m.messages[m.selectedEvent].collapsed
@@ -193,13 +208,6 @@ func (m *Model) centerViewOnItem() {
 	))
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (m *Model) renderContent() string {
 	var content string
 
@@ -209,26 +217,54 @@ func (m *Model) renderContent() string {
 			!event.collapsed,
 		)
 
+		// Style if item is unselected
+		style := lipgloss.NewStyle().
+			BorderLeft(false).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderLeftForeground(lipgloss.Color("237")).
+			PaddingLeft(3).
+			PaddingRight(m.Viewport.Width - lipgloss.Width(formattedItem) - 3)
+
+		// Style if item is selected
 		if m.selectedEvent == i {
-			content += selectedItemStyleViewPort.Render(formattedItem) + "\n"
+			style = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("127")).
+				BorderLeft(true).
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderLeftForeground(lipgloss.Color("127")).
+				PaddingLeft(3).
+				PaddingRight(m.Viewport.Width - lipgloss.Width(formattedItem) - 4)
+		}
+
+		// format collapsed items
+		if lipgloss.Height(formattedItem) == 1 {
+			bgColor := "232"
+			if i%2 == 0 {
+				bgColor = "235"
+			}
+			formattedItem = style.
+				Background(lipgloss.Color(bgColor)).
+				Bold(true).
+				Render(formattedItem)
 		} else {
-			content += formattedItem + "\n"
+			// format expanded items
+			formattedItem = style.Render(formattedItem)
 		}
 
 		// Set line number
-		m.messages[i].lineNumber = lipgloss.Height(formattedItem)
+		m.messages[i].lineNumber = lipgloss.Height(content) + 1
+
+		content += formattedItem + "\n"
+
 	}
 	return content
 }
 
-func (m Model) FormatList(list []string) string {
-	var str string
-	for _, msg := range list {
-		str += msg + "\n"
+func max(a, b int) int {
+	if a > b {
+		return a
 	}
-	return lipgloss.NewStyle().
-		PaddingLeft(2).
-		Render(str)
+	return b
 }
 
 func FormatMessage(in string, formatAsJson bool) string {
