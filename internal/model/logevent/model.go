@@ -39,19 +39,34 @@ type Model struct {
 	help           help.Model
 }
 
-func New(timestampe timestamp.Model, msg message.Model) Model {
+func New(
+	timestampModel timestamp.Model,
+	msg message.Model,
+	initialGroup, initialStream string,
+) Model {
 	helpModel := help.New()
 	helpModel.ShowAll = true
-	return Model{
-		Timestamp:      timestampe,
+
+	model := Model{
+		Timestamp:      timestampModel,
 		Messages:       message.Model{},
 		eventPaginator: nil,
 		numberOfEvents: 0,
-		selectedGroup:  "",
+		selectedGroup:  initialGroup,
 		selectedStream: "",
 		selectedEvent:  0,
 		help:           helpModel,
 	}
+
+	if initialGroup != "" {
+		model, _ = model.Update(commands.UpdateStreamListItemsMsg{Group: initialGroup})
+		model, _ = model.Update(commands.UpdateEventListItemsMsg{
+			Group:  initialGroup,
+			Stream: initialStream,
+		})
+	}
+
+	return model
 }
 
 func (m Model) Init() tea.Cmd {

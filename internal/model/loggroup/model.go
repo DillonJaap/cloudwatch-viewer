@@ -33,9 +33,10 @@ type Model struct {
 
 func New(
 	title string,
-	name string,
+	groupPattern string,
+	intialGroup string,
 ) Model {
-	itemList := GetLogGroupsAsItemList(name)
+	itemList := GetLogGroupsAsItemList(groupPattern)
 
 	groupList := list.New(itemList, &ItemDelegate{}, 0, 0)
 
@@ -49,7 +50,7 @@ func New(
 
 	return Model{
 		List:          groupList,
-		SelectedGroup: "",
+		SelectedGroup: "initialGroup",
 	}
 }
 

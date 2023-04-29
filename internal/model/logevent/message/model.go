@@ -131,7 +131,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			eventsToMessages(msg.AwsLogEvents, msg.Collapsed)...,
 		)
 	case CopyMessage:
-		if err := clipboard.WriteAll(m.messages[m.selectedEvent].content); err != nil {
+		eventMsg := m.messages[m.selectedEvent].content
+		collapsed := m.messages[m.selectedEvent].collapsed
+
+		eventMsg = FormatMessage(eventMsg, !collapsed)
+
+		if err := clipboard.WriteAll(eventMsg); err != nil {
 			log.Printf("error with clipboard: %s", err)
 		}
 		return m, nil
@@ -201,9 +206,22 @@ func (m Model) footerView() string {
 }
 
 func (m *Model) centerViewOnItem() {
+	itemHeightOffset := lipgloss.Height(FormatMessage(
+		m.messages[m.selectedEvent].content,
+		!m.messages[m.selectedEvent].collapsed,
+	))
+
+	if itemHeightOffset > m.Viewport.Height {
+		m.Viewport.SetYOffset(max(
+			0,
+			m.messages[m.selectedEvent].lineNumber-2, // TODO use const?
+		))
+		return
+	}
+
 	m.Viewport.SetYOffset(max(
 		0,
-		m.messages[m.selectedEvent].lineNumber-(m.Viewport.Height/2),
+		m.messages[m.selectedEvent].lineNumber-(m.Viewport.Height/2)+(itemHeightOffset/2),
 	))
 }
 

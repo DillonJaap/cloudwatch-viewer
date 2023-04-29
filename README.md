@@ -37,6 +37,7 @@
 - [ ] default to show full help
 - [ ] add short and long help functions to logevents menu
 - [ ] and tea.Msg to update windows sizes on certain events
+- [ ] add ability to not color json output
 
 - [ ] clean up code & add comments & clean up TODOs
 - [ ] refactor code - group related models - use more composition - simplify spacing between views 

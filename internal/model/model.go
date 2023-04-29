@@ -55,22 +55,38 @@ type Model struct {
 	selected  int
 }
 
-func New(ctx context.Context) *Model {
-	return &Model{
-		logEvent: event.New(
-			timestamp.New("Timestamps"),
-			message.New("Log Messages", "..."),
-		),
-		logGroup: group.New(
-			"Log Groups",
-			"/aws/lambda",
-		),
-		logStream: stream.New(
-			"Log Streams",
-		),
-		helpView: "",
-		selected: eventListSelected,
+func New(ctx context.Context, initialGroup string) *Model {
+	logGroup := group.New(
+		"Log Groups",
+		"/aws/lambda",
+		initialGroup,
+	)
+	logStream := stream.New(
+		"Log Streams",
+		initialGroup,
+	)
+
+	initialLogstream := ""
+	// initial logstream only if logstream has been initalized with items
+	if len(logStream.List.Items()) > 0 {
+		initialLogstream = logStream.List.Items()[0].FilterValue()
 	}
+
+	logEvent := event.New(
+		timestamp.New("Timestamps"),
+		message.New("Log Messages", "..."),
+		initialGroup,
+		initialLogstream,
+	)
+
+	model := Model{
+		logEvent:  logEvent,
+		logGroup:  logGroup,
+		logStream: logStream,
+		helpView:  "",
+		selected:  eventListSelected,
+	}
+	return &model
 }
 
 func (m *Model) Init() tea.Cmd {

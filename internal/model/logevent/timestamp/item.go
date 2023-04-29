@@ -1,13 +1,11 @@
 package timestamp
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/TylerBrock/colorjson"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/charmbracelet/bubbles/list"
@@ -71,25 +69,4 @@ func logEventsToItemList(logEvents []types.OutputLogEvent) []list.Item {
 	}
 
 	return items
-}
-
-func FormatMessage(in string, formatAsJson bool) string {
-	in = strings.ReplaceAll(in, "\t", " ")
-	in = strings.ReplaceAll(in, "\n", " ")
-
-	if in[0] == '{' && formatAsJson {
-		return formatJson(in)
-	}
-	return in
-}
-
-func formatJson(in string) string {
-	var obj map[string]interface{}
-	json.Unmarshal([]byte(in), &obj)
-
-	f := colorjson.NewFormatter()
-	f.Indent = 2
-
-	s, _ := f.Marshal(obj)
-	return string(s)
 }

@@ -39,6 +39,7 @@ type Model struct {
 
 func New(
 	title string,
+	initialGroup string,
 ) Model {
 	streamList := list.New([]list.Item{}, &ItemDelegate{}, 0, 0)
 
@@ -50,14 +51,20 @@ func New(
 	streamList.Styles.Title = titleStyle
 	streamList.Styles.PaginationStyle = paginationStyle
 
-	return Model{
+	model := Model{
 		List:            streamList,
 		SelectedStream:  "",
-		currentGroup:    "",
+		currentGroup:    initialGroup,
 		streamPaginator: &stream.Paginator{},
 		width:           0,
 		height:          0,
 	}
+
+	// initial group passed form cmd line arguments
+	if initialGroup != "" {
+		model, _ = model.UpdateStreamItems(initialGroup)
+	}
+	return model
 }
 
 func (m Model) Init() tea.Cmd {

@@ -32,21 +32,3 @@ func GetLogGroups(ctx context.Context, in cloudwatchlogs.DescribeLogGroupsInput)
 
 	return logGroups
 }
-
-func GetLogStreams(ctx context.Context, in cloudwatchlogs.DescribeLogStreamsInput) []types.LogStream {
-	// Load the Shared AWS Configuration(~/.aws/config)
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// get cloudwatch client
-	cwClient := cloudwatchlogs.NewFromConfig(cfg)
-
-	// get log groups
-	logStreamsOutput, err := cwClient.DescribeLogStreams(ctx, &in)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return logStreamsOutput.LogStreams
-}
