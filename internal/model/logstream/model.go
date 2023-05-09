@@ -62,7 +62,8 @@ func New(
 
 	// initial group passed form cmd line arguments
 	if initialGroup != "" {
-		model, _ = model.UpdateStreamItems(initialGroup)
+		model.currentGroup = initialGroup
+		model, _ = model.UpdateStreamItems()
 	}
 	return model
 }
@@ -91,6 +92,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, tea.Quit
 		case "L":
 			return m, m.loadMoreStreams()
+		case "R":
+			m, cmd := m.UpdateStreamItems()
+			return m, cmd
 		case "enter":
 			i, ok := m.List.SelectedItem().(Item)
 			if ok {
@@ -101,7 +105,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	case commands.UpdateStreamListItemsMsg:
 		m.currentGroup = msg.Group
-		m, cmd = m.UpdateStreamItems(m.currentGroup)
+		m, cmd = m.UpdateStreamItems()
 		cmds = append(cmds, cmd)
 	}
 
@@ -119,6 +123,23 @@ func (m Model) View() string {
 		Render(m.List.View())
 }
 
+func (m Model) UpdateStreamItems() (Model, tea.Cmd) {
+	ctx := context.Background()
+
+	// reset list
+	m.SelectedStream = ""
+	m.List.FilterInput.SetCursor(0)
+	m.List.SetItems(nil)
+
+	// get a new paginator for our log stream
+	paginator := stream.New(ctx, m.currentGroup)
+	m.streamPaginator = &paginator
+
+	// itemList := GetLogStreamsAsItemList(groupPattern)
+	// return m.List.SetItems(itemList)
+	return m, m.loadMoreStreams()
+}
+
 func (m *Model) loadMoreStreams() tea.Cmd {
 	ctx := context.Background()
 
@@ -132,23 +153,6 @@ func (m *Model) loadMoreStreams() tea.Cmd {
 	itemList = append(itemList, GetLogStreamsAsItemList(streams)...)
 
 	return m.List.SetItems(itemList)
-}
-
-func (m Model) UpdateStreamItems(groupName string) (Model, tea.Cmd) {
-	ctx := context.Background()
-
-	// reset list
-	m.SelectedStream = ""
-	m.List.FilterInput.SetCursor(0)
-	m.List.SetItems(nil)
-
-	// get a new paginator for our log stream
-	paginator := stream.New(ctx, groupName)
-	m.streamPaginator = &paginator
-
-	// itemList := GetLogStreamsAsItemList(groupPattern)
-	// return m.List.SetItems(itemList)
-	return m, m.loadMoreStreams()
 }
 
 func (m Model) HelpView() string {

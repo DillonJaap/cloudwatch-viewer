@@ -5,7 +5,7 @@
 - [ ] add search all log streams filtering
 - [ ] add saved searches
 - [x] paginate log events
-- [ ] paginate log Streams
+- [x] paginate log Streams
 - [x] fix filter spacing
 - [x] fix json formatting
 - [x] create unified help menu
@@ -38,6 +38,10 @@
 - [ ] add short and long help functions to logevents menu
 - [ ] and tea.Msg to update windows sizes on certain events
 - [ ] add ability to not color json output
+- [ ] can copy formatted json
+- [ ] make it so message viewport loads initally
+- [ ] light and dark colorscheme
+- [ ] lists have complete help menu
 
 - [ ] clean up code & add comments & clean up TODOs
 - [ ] refactor code - group related models - use more composition - simplify spacing between views 

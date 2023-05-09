@@ -128,12 +128,10 @@ func (m *Model) View() string {
 		logEventView,
 	)
 
-	return tuiBorder.Render(
-		lipgloss.JoinVertical(
-			lipgloss.Center,
-			m.helpView,
-			logListsAndEvents,
-		),
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.helpView,
+		logListsAndEvents,
 	)
 }
 
@@ -166,12 +164,12 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	const borderMarginSize = 4 // subtract 4 for border
-	const tuiBorder = 2
+	const tuiBorder = 1
 
 	height := msg.Height - lipgloss.Height(m.helpView) - tuiBorder
 	width := msg.Width - tuiBorder
 
-	logGroupListWidth := int(float32(width) / 4.0)
+	logGroupListWidth := int(float32(width) / 3.0)
 	logGroupListHeight := int(float32(height) / 2.0)
 	m.logGroup, cmd = m.logGroup.Update(tea.WindowSizeMsg{
 		Width:  logGroupListWidth,
@@ -179,7 +177,7 @@ func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	})
 	cmds = append(cmds, cmd)
 
-	logStreamListWidth := int(float32(width) / 4.0)
+	logStreamListWidth := int(float32(width) / 3.0)
 	logStreamListHeight := height - logGroupListHeight
 	m.logStream, cmd = m.logStream.Update(tea.WindowSizeMsg{
 		Width:  logStreamListWidth,

@@ -88,29 +88,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case commands.UpdateEventListItemsMsg:
 		m.selectedGroup = msg.Group
 		m.selectedStream = msg.Stream
-
-		// get a new paginator for our log group & stream
-		paginator := event.New(
-			context.Background(),
-			m.selectedGroup,
-			m.selectedStream,
-			"",
-		)
-		m.eventPaginator = &paginator
-
-		{ // reset data
-			m.numberOfEvents = 0
-			m.Timestamp, cmd = m.Timestamp.Update(timestamp.ResetMsg{})
-			cmds = append(cmds, cmd)
-			m.Messages, cmd = m.Messages.Update(message.ResetMsg{})
-			cmds = append(cmds, cmd)
-		}
-
-		// get initial set of events
-		cmd = m.loadMoreEvents()
-		cmds = append(cmds, cmd)
-
-		return m, tea.Batch(cmds...)
+		m, cmd = m.updateEventItems()
+		return m, cmd
 	}
 
 	m.Timestamp, cmd = m.Timestamp.Update(msg)
@@ -216,7 +195,11 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 		return m, cmd
 	case key.Matches(msg, keys.LoadMore):
 		return m, m.loadMoreEvents()
-	case key.Matches(msg, keys.ScrollDown),
+	case key.Matches(msg, keys.Reload):
+		m, cmd = m.updateEventItems()
+		return m, cmd
+	case
+		key.Matches(msg, keys.ScrollDown),
 		key.Matches(msg, keys.ScrollUp),
 		key.Matches(msg, keys.PageUp),
 		key.Matches(msg, keys.PageDown),
@@ -228,6 +211,34 @@ func (m Model) handleUpdateKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 		m.Timestamp, cmd = m.Timestamp.Update(msg)
 		return m, cmd
 	}
+}
+
+func (m Model) updateEventItems() (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	// get a new paginator for our log group & stream
+	paginator := event.New(
+		context.Background(),
+		m.selectedGroup,
+		m.selectedStream,
+		"",
+	)
+	m.eventPaginator = &paginator
+
+	{ // reset data
+		m.numberOfEvents = 0
+		m.Timestamp, cmd = m.Timestamp.Update(timestamp.ResetMsg{})
+		cmds = append(cmds, cmd)
+		m.Messages, cmd = m.Messages.Update(message.ResetMsg{})
+		cmds = append(cmds, cmd)
+	}
+
+	// get initial set of events
+	cmd = m.loadMoreEvents()
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) loadMoreEvents() tea.Cmd {

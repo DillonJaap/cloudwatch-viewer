@@ -24,6 +24,7 @@ type keyMap struct {
 	PageUp       key.Binding
 	HalfPageUp   key.Binding
 	HalfPageDown key.Binding
+	Reload       key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -33,14 +34,10 @@ func (k keyMap) ShortHelp() []key.Binding {
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Help, k.Quit},
-		{k.NextWindow, k.PrevWindow},
-		{k.PrevItem, k.NextItem},
-		{k.ScrollUp, k.ScrollDown},
-		{k.PageUp, k.PageDown},
-		{k.HalfPageUp, k.HalfPageDown},
-		{k.Collapse, k.CollapseAll},
-		{k.Filter, k.Copy},
-		{k.LoadMore},
+		{k.NextWindow, k.PrevWindow, k.PrevItem, k.NextItem},
+		{k.ScrollUp, k.ScrollDown, k.PageUp, k.PageDown},
+		{k.HalfPageUp, k.HalfPageDown, k.Collapse, k.CollapseAll},
+		{k.Filter, k.Copy, k.LoadMore, k.Reload},
 	}
 }
 
@@ -120,5 +117,9 @@ var keys = keyMap{
 	HalfPageDown: key.NewBinding(
 		key.WithKeys("d", "ctrl+d"),
 		key.WithHelp("d", "½ page down"),
+	),
+	Reload: key.NewBinding(
+		key.WithKeys("R"),
+		key.WithHelp("R", "reload events"),
 	),
 }

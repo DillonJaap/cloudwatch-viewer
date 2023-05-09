@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/TylerBrock/colorjson"
@@ -135,6 +136,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		collapsed := m.messages[m.selectedEvent].collapsed
 
 		eventMsg = FormatMessage(eventMsg, !collapsed)
+		eventMsg = removeANSIColorCodes(eventMsg)
 
 		if err := clipboard.WriteAll(eventMsg); err != nil {
 			log.Printf("error with clipboard: %s", err)
@@ -303,6 +305,11 @@ func formatJson(in string) string {
 
 	s, _ := f.Marshal(obj)
 	return string(s)
+}
+
+func removeANSIColorCodes(in string) string {
+	regex := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+	return regex.ReplaceAllString(in, "")
 }
 
 func eventsToMessages(logEvents []types.OutputLogEvent, collaped bool) []message {
