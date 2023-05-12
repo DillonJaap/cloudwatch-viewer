@@ -1,4 +1,4 @@
-package model
+package ui
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"clviewer/internal/commands"
-	event "clviewer/internal/model/logevent"
-	"clviewer/internal/model/logevent/message"
-	"clviewer/internal/model/logevent/timestamp"
-	group "clviewer/internal/model/loggroup"
-	stream "clviewer/internal/model/logstream"
+	event "clviewer/internal/ui/logevent"
+	"clviewer/internal/ui/logevent/message"
+	"clviewer/internal/ui/logevent/timestamp"
+	group "clviewer/internal/ui/loggroup"
+	stream "clviewer/internal/ui/logstream"
 )
 
 var (
@@ -41,16 +41,18 @@ var (
 )
 
 const (
-	groupListSelected  = 0
-	streamListSelected = 1
-	eventListSelected  = 2
-	numWindows         = 3
+	groupListSelected = iota
+	streamListSelected
+	eventListSelected
+	numWindows
 )
 
 type Model struct {
 	logEvent  event.Model
 	logGroup  group.Model
 	logStream stream.Model
+	Width     int
+	Height    int
 	helpView  string
 	selected  int
 }
@@ -152,22 +154,26 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateKeyMsg(msg)
 		}
 	case tea.WindowSizeMsg:
-		return m.updateWindowSizes(msg)
+		m.Width = msg.Width
+		m.Height = msg.Height
+		return m.updateWindowSizes()
+	case commands.RedrawWindowsMsg:
+		return m.updateWindowSizes()
 	case commands.UpdateViewPortContentMsg:
 		m.logEvent.Update(msg)
 	}
 	return m.updateSubModules(msg)
 }
 
-func (m *Model) updateWindowSizes(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
+func (m *Model) updateWindowSizes() (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	const borderMarginSize = 4 // subtract 4 for border
 	const tuiBorder = 1
 
-	height := msg.Height - lipgloss.Height(m.helpView) - tuiBorder
-	width := msg.Width - tuiBorder
+	height := m.Height - lipgloss.Height(m.helpView) - tuiBorder
+	width := m.Width - tuiBorder
 
 	logGroupListWidth := int(float32(width) / 3.0)
 	logGroupListHeight := int(float32(height) / 2.0)

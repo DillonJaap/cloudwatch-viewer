@@ -11,8 +11,8 @@ import (
 
 	"clviewer/internal/cloudwatch/event"
 	"clviewer/internal/commands"
-	"clviewer/internal/model/logevent/message"
-	"clviewer/internal/model/logevent/timestamp"
+	"clviewer/internal/ui/logevent/message"
+	"clviewer/internal/ui/logevent/timestamp"
 )
 
 var (

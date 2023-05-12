@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/charmbracelet/bubbles/list"
 
-	cw "clviewer/internal/cloudwatch"
+	group "clviewer/internal/cloudwatch/group"
 )
 
 const maxDescriptionLength = 90
@@ -18,7 +18,7 @@ type Item string
 func (i Item) FilterValue() string { return string(i) }
 
 func GetLogGroupsAsItemList(pattern string) []list.Item {
-	logGroups := cw.GetLogGroups(context.Background(), cloudwatchlogs.DescribeLogGroupsInput{
+	logGroups := group.GetLogGroups(context.Background(), cloudwatchlogs.DescribeLogGroupsInput{
 		LogGroupNamePrefix: aws.String(pattern),
 	})
 

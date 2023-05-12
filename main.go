@@ -7,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"clviewer/internal/model"
+	"clviewer/internal/ui"
 )
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 	}
 
 	p := tea.NewProgram(
-		model.New(ctx, group),
+		ui.New(ctx, group),
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)

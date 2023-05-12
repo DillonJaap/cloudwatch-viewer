@@ -59,12 +59,19 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.List.SetWidth(msg.Width)
 		m.List.SetHeight(msg.Height)
 		return m, nil
 	case tea.KeyMsg:
+		if isRedrawKey(msg) {
+			cmds = append(cmds, commands.RedrawWindows())
+		}
+
 		switch keypress := msg.String(); keypress {
 		case "ctrl+c":
 			return m, tea.Quit
@@ -74,10 +81,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.SelectedGroup = string(i)
 			}
 
-			return m, commands.UpdateStreamListItems(m.SelectedGroup)
+			cmds := append(cmds, commands.UpdateStreamListItems(m.SelectedGroup))
+			return m, tea.Batch(cmds...)
 		}
 	}
-	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
 	return m, cmd
 }
@@ -90,4 +97,13 @@ func (m Model) View() string {
 
 func (m Model) HelpView() string {
 	return m.List.Styles.HelpStyle.Render(m.List.Help.View(m.List))
+}
+
+// isRedrawKey checks to see if the keypress should trigger a redraw of the ui
+// TODO update to use proper keymap
+func isRedrawKey(key tea.KeyMsg) bool {
+	if key.String() == "enter" {
+		return true
+	}
+	return false
 }

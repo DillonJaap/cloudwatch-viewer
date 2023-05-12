@@ -9,15 +9,6 @@ type UpdateViewPortContentMsg struct {
 	YOffset int
 }
 
-type UpdateEventListItemsMsg struct {
-	Group  string
-	Stream string
-}
-
-type UpdateStreamListItemsMsg struct {
-	Group string
-}
-
 func UpdateViewPort(content []string, yOffset int) tea.Cmd {
 	return func() tea.Msg {
 		return UpdateViewPortContentMsg{
@@ -25,6 +16,11 @@ func UpdateViewPort(content []string, yOffset int) tea.Cmd {
 			YOffset: yOffset,
 		}
 	}
+}
+
+type UpdateEventListItemsMsg struct {
+	Group  string
+	Stream string
 }
 
 func UpdateEventListItems(group string, stream string) tea.Cmd {
@@ -36,10 +32,22 @@ func UpdateEventListItems(group string, stream string) tea.Cmd {
 	}
 }
 
+type UpdateStreamListItemsMsg struct {
+	Group string
+}
+
 func UpdateStreamListItems(group string) tea.Cmd {
 	return func() tea.Msg {
 		return UpdateStreamListItemsMsg{
 			Group: group,
 		}
+	}
+}
+
+type RedrawWindowsMsg struct{}
+
+func RedrawWindows() tea.Cmd {
+	return func() tea.Msg {
+		return RedrawWindowsMsg{}
 	}
 }
