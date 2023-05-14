@@ -33,8 +33,6 @@ type Model struct {
 	SelectedStream  string
 	currentGroup    string
 	streamPaginator *stream.Paginator
-	width           int
-	height          int
 }
 
 func New(
@@ -56,8 +54,6 @@ func New(
 		SelectedStream:  "",
 		currentGroup:    initialGroup,
 		streamPaginator: &stream.Paginator{},
-		width:           0,
-		height:          0,
 	}
 
 	// initial group passed form cmd line arguments
@@ -81,10 +77,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		// TODO make other components also have independent height/width feilds
-		m.width = msg.Width
-		m.height = msg.Height
-		m.List.SetWidth(m.width)
-		m.List.SetHeight(m.height)
+		m.List.SetWidth(msg.Width)
+		m.List.SetHeight(msg.Height)
 		return m, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -96,9 +90,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m, cmd := m.UpdateStreamItems()
 			return m, cmd
 		case "enter":
+			if m.List.SettingFilter() {
+				m.List, cmd = m.List.Update(msg)
+				return m, cmd
+			}
+
 			i, ok := m.List.SelectedItem().(Item)
 			if ok {
-				m.SelectedStream = string(i)
+				m.SelectedStream = i.name
 			}
 
 			return m, commands.UpdateEventListItems(m.currentGroup, m.SelectedStream)
@@ -109,8 +108,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
-	m.List.SetWidth(m.width)
-	m.List.SetHeight(m.height)
 	m.List, cmd = m.List.Update(msg)
 	cmds = append(cmds, cmd)
 

@@ -1,9 +1,5 @@
 # TODO
 - [x] fix viewport spacing
-- [ ] add log stream list
-- [ ] add cache for log stream and events
-- [ ] add search all log streams filtering
-- [ ] add saved searches
 - [x] paginate log events
 - [x] paginate log Streams
 - [x] fix filter spacing
@@ -11,37 +7,44 @@
 - [x] create unified help menu
 - [x] do the Update() methods have to return tea.Model, or can they return their own model?
 - [x] can see event messages as soon as tui loads
-- [ ] add styles module
 - [x] ~~refactor getItemListAsString() so that it is an array of strings, and so it only needs to be called once~~
-- [ ] add refresh button
 - [x] add collapse/expand all
-- [ ] add sane defaults for log group / stream values
 - [x] fix empty list panic
-- [ ] fix collapse all behavior so that it collapses if any item is open
 - [x] add sane defaults for sorting
+- [x] viewport scroll (vertical)
+- [x] display the currently selected log group & stream in ui
+- [x] viewport copy message keybind
+- [x] update filtering so that pressing enter applys the filter, but doesn't select the item
+- [x] add log stream list
+- [x] add refresh keybind
+- [x] add sane defaults for log group / stream values
+- [x] improve updateViewPort logic
+- [ ] add cache for log stream and events
+- [ ] add search all log streams filtering
+- [ ] add saved searches
+- [ ] add styles module
+- [ ] fix collapse all behavior so that it collapses if any item is open
 - [ ] add ability to chose sorting method
 - [ ] add loading status to ui
-- [x] display the currently selected log group & stream in ui
-- [ ] improve updateViewPort logic
 - [ ] reset list cursor when new data loads
 - [ ] custom keybindings
 - [ ] proper filtering for messages / add search for messages viewport
-- [x] viewport scroll (vertical)
 - [ ] viewport scroll (horizontal)
-- [x] viewport copy message keybind
 - [ ] add last event time to logstream list (change list into table?)
 - [ ] clean up log.fatal() figure out a better way to handle it
 - [ ] use terminal colors
-- [ ] add seperator for help items
-- [ ] fix styling for help menus so they are limited to 2 - 3 lines
-- [ ] default to show full help
 - [ ] add short and long help functions to logevents menu
 - [ ] and tea.Msg to update windows sizes on certain events
 - [ ] add ability to not color json output
 - [ ] can copy formatted json
 - [ ] make it so message viewport loads initally
 - [ ] light and dark colorscheme
+
+- [ ] add seperator for help items
+- [ ] fix styling for help menus so they are limited to 2 - 3 lines
+- [ ] default to show full help
 - [ ] lists have complete help menu
+- [ ] center help menu at the top
 
 - [ ] clean up code & add comments & clean up TODOs
 - [ ] refactor code - group related models - use more composition - simplify spacing between views 

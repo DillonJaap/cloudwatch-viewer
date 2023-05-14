@@ -76,6 +76,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
+			// don't apply item if currently setting filter
+			if m.List.SettingFilter() {
+				m.List, cmd = m.List.Update(msg)
+				return m, cmd
+			}
+
+			// TODO update to not use key press, but checking to see if
+			// selected item changed to send the updateStreamListCommand?
+			// Could this logic be moved up to ui/model?
 			i, ok := m.List.SelectedItem().(Item)
 			if ok {
 				m.SelectedGroup = string(i)
