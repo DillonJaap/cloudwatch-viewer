@@ -47,4 +47,5 @@
 - [ ] center help menu at the top
 
 - [ ] clean up code & add comments & clean up TODOs
+- [ ] refactor to use init functions
 - [ ] refactor code - group related models - use more composition - simplify spacing between views 

@@ -34,7 +34,7 @@ func (i Item) getTruncatedTimeStamp(maxLength int) string {
 
 	// TODO add error handling
 	timeInt, _ := strconv.ParseInt(i.TimeStamp, 10, 64)
-	time := time.Unix(0, timeInt*int64(time.Millisecond)).String()
+	time := time.Unix(0, timeInt*int64(time.Millisecond)).Format("2006-01-02 15:04 MST")
 	if len(time) > maxLength {
 		return time[0:maxLength-3] + "..."
 	}

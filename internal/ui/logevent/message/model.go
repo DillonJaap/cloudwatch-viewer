@@ -320,7 +320,7 @@ func eventsToMessages(logEvents []types.OutputLogEvent, collaped bool) []message
 			message{
 				content:    aws.ToString(logEvents[k].Message),
 				collapsed:  collaped,
-				lineNumber: k, // TODO should line number start at one?
+				lineNumber: k,
 			},
 		)
 	}

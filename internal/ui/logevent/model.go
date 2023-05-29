@@ -82,6 +82,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m.handleUpdateWindowSize(msg)
 	case tea.KeyMsg:
 		return m.handleUpdateKey(msg)
+		// TODO combine these? or refactor somehow?
 	case commands.UpdateStreamListItemsMsg:
 		m.selectedGroup = msg.Group
 		return m, nil
@@ -227,7 +228,9 @@ func (m Model) updateEventItems() (Model, tea.Cmd) {
 	m.eventPaginator = &paginator
 
 	{ // reset data
+		m.selectedEvent = 0
 		m.numberOfEvents = 0
+
 		m.Timestamp, cmd = m.Timestamp.Update(timestamp.ResetMsg{})
 		cmds = append(cmds, cmd)
 		m.Messages, cmd = m.Messages.Update(message.ResetMsg{})

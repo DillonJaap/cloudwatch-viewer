@@ -74,6 +74,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			logEventsToItemList(msg)...,
 		))
 	case ResetMsg:
+		m.List.ResetSelected()
 		m.List.SetItems([]list.Item{})
 	case NextEventMsg:
 		m.List.CursorDown()

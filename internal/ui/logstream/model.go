@@ -125,7 +125,7 @@ func (m Model) UpdateStreamItems() (Model, tea.Cmd) {
 
 	// reset list
 	m.SelectedStream = ""
-	m.List.FilterInput.SetCursor(0)
+	m.List.ResetSelected()
 	m.List.SetItems(nil)
 
 	// get a new paginator for our log stream

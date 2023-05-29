@@ -30,6 +30,7 @@ func New(ctx context.Context, logGroupName string) Paginator {
 			LogGroupName: aws.String(logGroupName),
 			Limit:        aws.Int32(50),
 			Descending:   aws.Bool(true),
+			OrderBy:      types.OrderByLastEventTime,
 		},
 	)
 	if err != nil {

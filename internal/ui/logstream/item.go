@@ -16,7 +16,7 @@ type Item struct {
 	name      string
 }
 
-func (i Item) FilterValue() string { return i.timestamp + " | " + i.name }
+func (i Item) FilterValue() string { return i.timestamp }
 
 func GetLogStreamsAsItemList(streams []types.LogStream) []list.Item {
 	var items []list.Item
@@ -24,7 +24,7 @@ func GetLogStreamsAsItemList(streams []types.LogStream) []list.Item {
 		name := aws.ToString(streams[k].LogStreamName)
 
 		timeInt := aws.ToInt64(streams[k].FirstEventTimestamp)
-		timestamp := time.Unix(0, timeInt*int64(time.Millisecond)).String()
+		timestamp := time.Unix(0, timeInt*int64(time.Millisecond)).Format("2006-01-02 15:04 MDT")
 
 		items = append(items, Item{
 			timestamp: timestamp,

@@ -2,8 +2,8 @@ package ui
 
 import (
 	"context"
-	"math"
 
+	"github.com/charmbracelet/bubbles/paginator"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -13,6 +13,7 @@ import (
 	"clviewer/internal/ui/logevent/timestamp"
 	group "clviewer/internal/ui/loggroup"
 	stream "clviewer/internal/ui/logstream"
+	"clviewer/internal/ui/pages"
 )
 
 var (
@@ -48,13 +49,15 @@ const (
 )
 
 type Model struct {
-	logEvent  event.Model
-	logGroup  group.Model
-	logStream stream.Model
-	Width     int
-	Height    int
-	helpView  string
-	selected  int
+	eventPage pages.Event
+	groupPage pages.Group
+
+	Width    int
+	Height   int
+	helpView string
+	selected int
+
+	paginator paginator.Model
 }
 
 func New(ctx context.Context, initialGroup string) *Model {
@@ -81,12 +84,25 @@ func New(ctx context.Context, initialGroup string) *Model {
 		initialLogstream,
 	)
 
+	paginator := paginator.New()
+	paginator.SetTotalPages(2)
+
 	model := Model{
-		logEvent:  logEvent,
-		logGroup:  logGroup,
-		logStream: logStream,
+		eventPage: pages.Event{
+			LogEvents:  logEvent,
+			LogStreams: logStream,
+			Focused:    0,
+			Width:      0,
+			Height:     0,
+		},
+		groupPage: pages.Group{
+			Model: logGroup,
+		},
+		Width:     0,
+		Height:    0,
 		helpView:  "",
 		selected:  eventListSelected,
+		paginator: paginator,
 	}
 	return &model
 }
@@ -96,60 +112,28 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) View() string {
-	logGroupList := m.logGroup.View()
-	logStreamList := m.logStream.View()
-	logEventView := m.logEvent.View()
-
-	switch m.selected {
-	case groupListSelected:
-		m.helpView = m.logGroup.HelpView()
-		logGroupList = selectedModelStyle.Render(logGroupList)
-		logEventView = modelStyle.Render(logEventView)
-		logStreamList = modelStyle.Render(logStreamList)
-	case streamListSelected:
-		m.helpView = m.logStream.HelpView()
-		logStreamList = selectedModelStyle.Render(logStreamList)
-		logEventView = modelStyle.Render(logEventView)
-		logGroupList = modelStyle.Render(logGroupList)
-	case eventListSelected:
-		m.helpView = m.logEvent.HelpView()
-		logEventView = selectedModelStyle.Render(logEventView)
-		logGroupList = modelStyle.Render(logGroupList)
-		logStreamList = modelStyle.Render(logStreamList)
+	if m.paginator.Page == 0 {
+		return m.groupPage.View()
 	}
 
-	logLists := lipgloss.JoinVertical(
-		lipgloss.Left,
-		logGroupList,
-		logStreamList,
-	)
+	if m.paginator.Page == 1 {
+		return m.eventPage.View()
+	}
 
-	logListsAndEvents := lipgloss.JoinHorizontal(
-		lipgloss.Left,
-		logLists,
-		logEventView,
-	)
-
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		m.helpView,
-		logListsAndEvents,
-	)
+	return ""
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "tab":
-			m.selected = (m.selected + 1) % numWindows
-			return m, nil
-		case "shift+tab":
-			m.selected = int(math.Abs(float64((m.selected - 1) % numWindows)))
-			return m, nil
+		case "h", "l":
+			m.paginator, cmd = m.paginator.Update(msg)
+			return m, cmd
 		default:
 			return m.updateKeyMsg(msg)
 		}
@@ -160,74 +144,54 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commands.RedrawWindowsMsg:
 		return m.updateWindowSizes()
 	case commands.UpdateViewPortContentMsg:
-		m.logEvent.Update(msg)
+		m.eventPage.Update(msg)
 	}
-	return m.updateSubModules(msg)
+	return m.updateCurrentPage(msg)
 }
 
 func (m *Model) updateWindowSizes() (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	var cmds []tea.Cmd
 
-	const borderMarginSize = 4 // subtract 4 for border
-	const tuiBorder = 1
+	if m.paginator.Page == 0 {
+		m.groupPage.Model, cmd = m.groupPage.Update(tea.WindowSizeMsg{
+			Width:  m.Width,
+			Height: m.Height,
+		})
+		return m, cmd
+	}
+	if m.paginator.Page == 1 {
+		m.eventPage, cmd = m.eventPage.Update(tea.WindowSizeMsg{
+			Width:  m.Width,
+			Height: m.Height,
+		})
+	}
 
-	height := m.Height - lipgloss.Height(m.helpView) - tuiBorder
-	width := m.Width - tuiBorder
-
-	logGroupListWidth := int(float32(width) / 3.0)
-	logGroupListHeight := int(float32(height) / 2.0)
-	m.logGroup, cmd = m.logGroup.Update(tea.WindowSizeMsg{
-		Width:  logGroupListWidth,
-		Height: logGroupListHeight - borderMarginSize/2,
-	})
-	cmds = append(cmds, cmd)
-
-	logStreamListWidth := int(float32(width) / 3.0)
-	logStreamListHeight := height - logGroupListHeight
-	m.logStream, cmd = m.logStream.Update(tea.WindowSizeMsg{
-		Width:  logStreamListWidth,
-		Height: logStreamListHeight - borderMarginSize/2,
-	})
-	cmds = append(cmds, cmd)
-
-	eventsWidth := width - logGroupListWidth
-	logEventHeight := height
-	m.logEvent, cmd = m.logEvent.Update(tea.WindowSizeMsg{
-		Width:  eventsWidth - borderMarginSize,
-		Height: logEventHeight - borderMarginSize,
-	})
-	cmds = append(cmds, cmd)
-
-	return m, tea.Batch(cmds...)
+	return m, nil
 }
 
 func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd = nil
 
-	switch m.selected {
-	case groupListSelected:
-		m.logGroup, cmd = m.logGroup.Update(msg)
-	case streamListSelected:
-		m.logStream, cmd = m.logStream.Update(msg)
-	case eventListSelected:
-		m.logEvent, cmd = m.logEvent.Update(msg)
+	if m.paginator.Page == 0 {
+		m.groupPage.Model, cmd = m.groupPage.Update(msg)
+	} else if m.paginator.Page == 1 {
+		m.eventPage, cmd = m.eventPage.Update(msg)
 	}
+
 	return m, cmd
 }
 
-func (m *Model) updateSubModules(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) updateCurrentPage(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
-
-	m.logGroup, cmd = m.logGroup.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.logStream, cmd = m.logStream.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.logEvent, cmd = m.logEvent.Update(msg)
-	cmds = append(cmds, cmd)
+	if m.paginator.Page == 0 {
+		m.groupPage.Model, cmd = m.groupPage.Update(msg)
+		return m, cmd
+	}
+	if m.paginator.Page == 1 {
+		m.eventPage, cmd = m.eventPage.Update(msg)
+		return m, cmd
+	}
 
 	return m, tea.Batch(cmds...)
 }
