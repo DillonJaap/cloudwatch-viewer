@@ -58,7 +58,7 @@ func (m Event) Init() tea.Cmd {
 	return nil
 }
 
-func (e Event) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (e Event) Update(msg tea.Msg) (Event, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {

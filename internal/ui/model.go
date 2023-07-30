@@ -14,7 +14,6 @@ import (
 	group "clviewer/internal/ui/loggroup"
 	stream "clviewer/internal/ui/logstream"
 	"clviewer/internal/ui/pages"
-	"clviewer/internal/util"
 )
 
 var (
@@ -42,16 +41,16 @@ var (
 			Foreground(lipgloss.Color("98"))
 )
 
-var (
-	asGroup = util.As[pages.Group]()
-	asEvent = util.As[pages.Event]()
-)
-
 const (
 	groupListSelected = iota
 	streamListSelected
 	eventListSelected
 	numWindows
+)
+
+const (
+	groupPage = iota
+	eventPage
 )
 
 type Model struct {
@@ -117,16 +116,14 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) View() string {
-	// TODO add enum for selected pages
-	if m.paginator.Page == 0 {
+	switch m.currentPage() {
+	case groupPage:
 		return m.groupPage.View()
-	}
-
-	if m.paginator.Page == 1 {
+	case eventPage:
 		return m.eventPage.View()
+	default:
+		return ""
 	}
-
-	return ""
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -141,7 +138,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.paginator, cmd = m.paginator.Update(msg)
 			return m, cmd
 		default:
-			return m.updateKeyMsg(msg)
+			return m.updateCurrentPage(msg)
 		}
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
@@ -155,58 +152,31 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m.updateCurrentPage(msg)
 }
 
-func (m *Model) updateWindowSizes() (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
-	if m.paginator.Page == 0 {
-		m.groupPage, cmd = asGroup(m.groupPage.Update(tea.WindowSizeMsg{
+func (m *Model) updateWindowSizes() (*Model, tea.Cmd) {
+	m, cmd := m.updateCurrentPage(
+		tea.WindowSizeMsg{
 			Width:  m.Width,
 			Height: m.Height,
-		}))
-		return m, cmd
-	}
-	if m.paginator.Page == 1 {
-		m.eventPage, cmd = asEvent(m.eventPage.Update(tea.WindowSizeMsg{
-			Width:  m.Width,
-			Height: m.Height,
-		}))
-	}
-
-	return m, nil
-}
-
-func (m *Model) updateKeyMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd = nil
-
-	if m.paginator.Page == 0 {
-		m.groupPage, cmd = asGroup(m.groupPage.Update(msg))
-	} else if m.paginator.Page == 1 {
-		m.eventPage, cmd = asEvent(m.eventPage.Update(msg))
-	}
-
+		},
+	)
 	return m, cmd
 }
 
-func (m *Model) updateCurrentPage(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) updateCurrentPage(msg tea.Msg) (*Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
-	if m.paginator.Page == 0 {
-		m.groupPage, cmd = asGroup(m.groupPage.Update(msg))
+	switch m.currentPage() {
+	case groupPage:
+		m.groupPage, cmd = m.groupPage.Update(msg)
 		return m, cmd
-	}
-	if m.paginator.Page == 1 {
-		m.eventPage, cmd = asEvent(m.eventPage.Update(msg))
+	case eventPage:
+		m.eventPage, cmd = m.eventPage.Update(msg)
 		return m, cmd
 	}
 
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) currentPage() tea.Model {
-	switch m.paginator.Page {
-	case 0:
-		return m.groupPage
-	default:
-		return m.eventPage
-	}
+func (m Model) currentPage() int {
+	return m.paginator.Page
 }
