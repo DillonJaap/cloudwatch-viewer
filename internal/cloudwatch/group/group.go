@@ -24,10 +24,10 @@ func GetLogGroups(ctx context.Context, in cloudwatchlogs.DescribeLogGroupsInput)
 	var logGroups []types.LogGroup
 	for cwPaginator.HasMorePages() {
 		output, err := cwPaginator.NextPage(ctx)
-		logGroups = append(logGroups, output.LogGroups...)
 		if err != nil {
 			log.Fatal(err)
 		}
+		logGroups = append(logGroups, output.LogGroups...)
 	}
 
 	return logGroups

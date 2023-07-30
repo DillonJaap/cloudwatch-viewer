@@ -58,7 +58,7 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -77,8 +77,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			// don't apply item if currently setting filter
+			m.List, cmd = m.List.Update(msg)
 			if m.List.SettingFilter() {
-				m.List, cmd = m.List.Update(msg)
 				return m, cmd
 			}
 

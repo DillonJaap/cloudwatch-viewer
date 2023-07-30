@@ -8,7 +8,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// Item Delegate
 type ItemDelegate struct{}
 
 func (d ItemDelegate) Height() int { return 1 }

@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"log"
 	"math"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -49,16 +50,15 @@ type Event struct {
 	LogEvents  logevent.Model
 	LogStreams logstream.Model
 	Focused    int
-
-	Width  int
-	Height int
+	Width      int
+	Height     int
 }
 
 func (m Event) Init() tea.Cmd {
 	return nil
 }
 
-func (e Event) Update(msg tea.Msg) (Event, tea.Cmd) {
+func (e Event) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -152,6 +152,7 @@ func (e Event) updateSubModels(msg tea.Msg) (Event, tea.Cmd) {
 	e.LogEvents, cmd = e.LogEvents.Update(msg)
 	cmds = append(cmds, cmd)
 
+	log.Printf("%+v", e)
 	return e, tea.Batch(cmds...)
 }
 
