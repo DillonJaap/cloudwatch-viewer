@@ -3,6 +3,7 @@ package logevent
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -85,6 +86,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		// TODO combine these? or refactor somehow?
 	case commands.UpdateStreamListItemsMsg:
 		m.selectedGroup = msg.Group
+		log.Printf("%+v", m.selectedGroup)
 		return m, nil
 	case commands.UpdateEventListItemsMsg:
 		m.selectedGroup = msg.Group

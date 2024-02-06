@@ -1,7 +1,6 @@
 package pages
 
 import (
-	"log"
 	"math"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -152,7 +151,6 @@ func (e Event) updateSubModels(msg tea.Msg) (Event, tea.Cmd) {
 	e.LogEvents, cmd = e.LogEvents.Update(msg)
 	cmds = append(cmds, cmd)
 
-	log.Printf("%+v", e)
 	return e, tea.Batch(cmds...)
 }
 

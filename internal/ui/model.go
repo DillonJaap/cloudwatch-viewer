@@ -147,19 +147,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commands.RedrawWindowsMsg:
 		return m.updateWindowSizes()
 	case commands.UpdateViewPortContentMsg:
-		m.eventPage.Update(msg)
+		return m.updateCurrentPage(msg)
+	default:
+		return m.updatePages(msg)
 	}
-	return m.updateCurrentPage(msg)
 }
 
-func (m *Model) updateWindowSizes() (*Model, tea.Cmd) {
-	m, cmd := m.updateCurrentPage(
-		tea.WindowSizeMsg{
-			Width:  m.Width,
-			Height: m.Height,
-		},
-	)
-	return m, cmd
+func (m Model) currentPage() int {
+	return m.paginator.Page
 }
 
 func (m *Model) updateCurrentPage(msg tea.Msg) (*Model, tea.Cmd) {
@@ -177,6 +172,25 @@ func (m *Model) updateCurrentPage(msg tea.Msg) (*Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) currentPage() int {
-	return m.paginator.Page
+func (m *Model) updatePages(msg tea.Msg) (*Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	m.groupPage, cmd = m.groupPage.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.eventPage, cmd = m.eventPage.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) updateWindowSizes() (*Model, tea.Cmd) {
+	m, cmd := m.updatePages(
+		tea.WindowSizeMsg{
+			Width:  m.Width,
+			Height: m.Height,
+		},
+	)
+	return m, cmd
 }

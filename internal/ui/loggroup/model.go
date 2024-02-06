@@ -1,6 +1,8 @@
 package loggroup
 
 import (
+	"log"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -77,8 +79,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			// don't apply item if currently setting filter
-			m.List, cmd = m.List.Update(msg)
 			if m.List.SettingFilter() {
+				m.List, cmd = m.List.Update(msg)
 				return m, cmd
 			}
 
@@ -89,6 +91,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if ok {
 				m.SelectedGroup = string(i)
 			}
+			log.Printf("loggroup: %+v", m.SelectedGroup)
 
 			cmds := append(cmds, commands.UpdateStreamListItems(m.SelectedGroup))
 			return m, tea.Batch(cmds...)

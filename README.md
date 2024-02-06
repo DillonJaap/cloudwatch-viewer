@@ -40,11 +40,8 @@
 - [ ] make it so message viewport loads initally
 - [ ] light and dark colorscheme
 
-- [ ] add seperator for help items
-- [ ] fix styling for help menus so they are limited to 2 - 3 lines
-- [ ] default to show full help
 - [ ] lists have complete help menu
-- [ ] center help menu at the top
+- [ ] elements have their own help menu
 
 - [ ] clean up code & add comments & clean up TODOs
 - [ ] refactor to use init functions
